@@ -23,9 +23,9 @@ jobs:
           chmod 600 private_key.pem
           ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST << 'EOF'
             cd /var/www/money-manager-web-frontend
-            git pull origin main
-            npm install --production
-            npm run build
+            sudo git pull origin main
+            sudo npm install --production
+            sudo npm run build
             sudo systemctl restart nginx
           EOF
 
