@@ -119,7 +119,7 @@
                   <p class="mt-4 text-gray-400 text-sm">
                     Already have an account?
                     <span
-                      @click="openLogin"
+                      @click="router.push('/login')"
                       class="text-gold cursor-pointer hover:underline"
                       >Login</span
                     >
@@ -135,7 +135,8 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits, nextTick } from "vue";
+import { ref, defineProps, nextTick } from "vue";
+import { useRouter } from "vue-router";
 import api from "../services/api";
 
 const name = ref("");
@@ -147,7 +148,7 @@ const modalBox = ref(null);
 const errors = ref({ name: "", email: "", password: "", general: "" });
 
 const props = defineProps({ isOpen: Boolean });
-const emit = defineEmits(["close", "openLogin"]);
+const router = useRouter();
 
 const register = async () => {
   isLoading.value = true;
@@ -187,17 +188,11 @@ const register = async () => {
 };
 
 const close = () => {
-  isSubmitted.value = false;
-  emit("close");
+  router.push('/'); // Ensure route clears when closing
 };
 
 const clearError = (field) => {
   errors.value[field] = "";
-};
-
-const openLogin = () => {
-  close();
-  emit("openLogin");
 };
 
 const adjustHeight = async () => {

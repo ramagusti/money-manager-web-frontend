@@ -1,8 +1,6 @@
 <template>
-  <header
-    class="fixed top-0 left-0 w-full bg-opacity-25 backdrop-blur-md shadow-lg z-50"
-  >
-    <div class="max-w-6xl mx-auto flex items-center justify-between p-4">
+  <header class="top-navbar bg-opacity-25 backdrop-blur-md">
+    <div class="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
       <router-link to="/" class="text-2xl font-bold text-white">
         Money Manager
       </router-link>
@@ -35,9 +33,24 @@
 </template>
 
 <script setup>
-import { useAuthStore } from "../stores/auth";
+import router from "../router";
 import { useRouter } from "vue-router";
+import { useAuthStore } from "../stores/auth";
 
 const authStore = useAuthStore();
 const router = useRouter();
 </script>
+
+<style scoped>
+.top-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  justify-content: space-between;
+  background: #1c2d56;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+}
+</style>

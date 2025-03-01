@@ -10,10 +10,10 @@
               @before-enter="adjustHeight"
               @after-enter="resetHeight"
             >
-              <template v-if="isLoggedIn">
+              <template v-if="authStore.isAuthenticated">
                 <div key="success">
                   <h2 class="text-3xl font-semibold text-gold mb-4">
-                    Welcome, {{ userName }} 🎉
+                    Welcome, {{ authStore.user?.name }} 🎉
                   </h2>
                   <p class="text-gray-300 text-sm">
                     Redirecting to your dashboard...
@@ -24,7 +24,7 @@
               <template v-else>
                 <div key="login">
                   <h2 class="text-3xl font-semibold text-gold mb-6">Login</h2>
-                  <form @submit.prevent="login" class="space-y-4">
+                  <form @submit.prevent="handleLogin" class="space-y-4">
                     <div class="input-group">
                       <input
                         type="email"
@@ -74,9 +74,9 @@
                     <button
                       type="submit"
                       class="btn-primary w-full"
-                      :disabled="isLoading"
+                      :disabled="authStore.isLoading"
                     >
-                      <span v-if="isLoading" class="spinner"></span>
+                      <span v-if="authStore.isLoading" class="spinner"></span>
                       <span v-else>Login</span>
                     </button>
                   </form>
@@ -115,7 +115,7 @@
                   <p class="mt-4 text-gray-400 text-sm">
                     Don't have an account?
                     <span
-                      @click="openSignup"
+                      @click="router.push('/signup')"
                       class="text-gold cursor-pointer hover:underline"
                       >Sign Up</span
                     >
@@ -131,40 +131,28 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits, nextTick } from "vue";
+import { ref, defineProps, nextTick } from "vue";
 import { useRouter } from "vue-router";
+import { useAuthStore } from "../stores/auth";
 import api from "../services/api";
 
 const email = ref("");
 const password = ref("");
-const userName = ref("");
-const isLoggedIn = ref(false);
 const isLoading = ref(false);
 const modalBox = ref(null);
-const router = useRouter();
 const errors = ref({ email: "", password: "", general: "" });
+const authStore = useAuthStore();
 
 const props = defineProps({ isOpen: Boolean });
-const emit = defineEmits(["close", "openSignup"]);
+const router = useRouter();
 
-const login = async () => {
+const handleLogin = async () => {
   isLoading.value = true;
   errors.value = { email: "", password: "", general: "" };
-
+  
   try {
-    const response = await api.post("/login", {
-      email: email.value,
-      password: password.value,
-    });
-
-    localStorage.setItem("token", response.data.token);
-    userName.value = response.data.user.name;
-    isLoggedIn.value = true;
-
-    setTimeout(() => {
-      close();
-      router.push("/dashboard");
-    }, 2000);
+    await authStore.login(email.value, password.value);
+    router.push("/dashboard");
   } catch (error) {
     const validationErrors = error.response.data.errors;
     errors.value.email = validationErrors?.email?.[0] || "";
@@ -201,14 +189,7 @@ const clearError = (field) => {
 };
 
 const close = () => {
-  isLoggedIn.value = false;
-  errors.value = { email: "", password: "", general: "" };
-  emit("close");
-};
-
-const openSignup = () => {
-  close();
-  emit("openSignup");
+  router.push('/'); // Ensure route clears when closing
 };
 
 const adjustHeight = async () => {

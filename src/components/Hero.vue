@@ -14,14 +14,25 @@
       <p class="text-lg max-w-lg mx-auto animate-fadeInUp delay-200">
         A smart way to track your income, expenses, and investments.
       </p>
-      <button
-        class="mt-12 px-6 py-3 bg-gold text-black font-semibold rounded-lg hover:bg-yellow-500"
+      <a
+        :href="token ? '/dashboard' : `/login`"
+        class="mt-12 p-3 btn-primary mx-auto max-w-max"
       >
         Get Started
-      </button>
+      </a>
     </div>
   </div>
 </template>
+
+<script setup>
+import { ref, watchEffect } from "vue";
+
+const token = ref(localStorage.getItem("token"));
+
+watchEffect(() => {
+  token.value = localStorage.getItem("token");
+});
+</script>
 
 <style>
 @keyframes fadeInUp {
