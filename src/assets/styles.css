@@ -1,0 +1,42 @@
+.input-field {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #eab308;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  color: white;
+}
+
+.btn-primary {
+  background: #eab308;
+  color: black;
+  padding: 10px;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: background 0.2s ease-in-out;
+}
+
+.btn-primary:hover {
+  background: #facc15;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-content {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  border-radius: 15px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(255, 215, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 350px;
+}
