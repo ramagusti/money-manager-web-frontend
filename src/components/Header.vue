@@ -1,11 +1,7 @@
 <template>
-  <header
-    class="fixed top-0 left-0 w-full bg-opacity-25 backdrop-blur-md shadow-lg z-50"
-  >
-    <div class="max-w-6xl mx-auto flex items-center justify-between p-4">
-      <router-link to="/" class="text-2xl font-bold text-white">
-        Money Manager
-      </router-link>
+  <header class="header">
+    <div class="header-container">
+      <router-link to="/" class="brand">Money Manager</router-link>
       <nav>
         <template v-if="authStore.isAuthenticated">
           <button
@@ -41,3 +37,29 @@ import { useRouter } from "vue-router";
 const authStore = useAuthStore();
 const router = useRouter();
 </script>
+
+<style scoped>
+.header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  padding: 10px;
+  z-index: 100;
+}
+
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: auto;
+  padding: 0 20px;
+}
+
+.brand {
+  font-size: 1.5rem;
+  color: #eab308;
+}
+</style>

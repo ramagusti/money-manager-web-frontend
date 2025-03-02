@@ -17,17 +17,17 @@ const routes = [
     path: "/verified-success",
     component: VerifiedSuccess
   },
-  { 
-    path: "/dashboard", 
-    name: "Dashboard", 
-    component: Dashboard, 
-    meta: { requiresAuth: true } 
+  {
+    path: "/dashboard",
+    name: "Dashboard",
+    component: Dashboard,
+    meta: { requiresAuth: true }
   },
-  { 
-    path: "/transactions", 
-    name: "Transactions", 
-    component: Transactions, 
-    meta: { requiresAuth: true } 
+  {
+    path: "/transactions",
+    name: "Transactions",
+    component: Transactions,
+    meta: { requiresAuth: true }
   },
   {
     path: "/login",
@@ -59,12 +59,11 @@ router.beforeEach(async (to, from, next) => {
   try {
     if (!authStore.user) {
       await authStore.fetchUser(); // Ensure session is loaded before checking access
-    } else {
-      if (!appStore.userGroups.length) {
-        await appStore.fetchGroups();
-      }
     }
-  
+    if (authStore.token && !appStore.userGroups.length) {
+      await appStore.fetchGroups();
+    }
+
     if (to.meta.requiresAuth && !authStore.isAuthenticated) {
       next({ path: "/login" }); // Redirect and open login modal
     } else {

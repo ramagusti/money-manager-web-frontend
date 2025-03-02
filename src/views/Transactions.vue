@@ -1,61 +1,85 @@
 <template>
+  <div v-if="isLoadingData" class="loading-container">
+    <div class="loading-spinner"></div>
+  </div>
   <div class="transactions-container">
     <!-- Header & Summary -->
     <div class="transactions-header">
       <h2 class="text-3xl font-bold text-white">📜 Transactions</h2>
-      <div class="summary-cards">
-        <div class="summary-item text-green">
-          Income: Rp {{ totalIncome.toLocaleString() }}
-        </div>
-        <div class="summary-item text-red">
-          Expenses: Rp {{ totalExpense.toLocaleString() }}
-        </div>
-        <div class="summary-item text-gold">
-          Savings: Rp {{ totalSavings.toLocaleString() }}
-        </div>
+      <button class="btn-primary" @click="openModal">➕ Add Transaction</button>
+    </div>
+    <div class="summary-cards">
+      <div class="summary-item income">
+        <span class="label">Income</span>
+        <span class="value"
+          >{{ currency }} {{ formatAmount(totalIncome) }}</span
+        >
       </div>
-      <button class="btn-primary ml-6" @click="showTransactionModal = true">
-        Add Transaction
-      </button>
+      <div class="summary-item expense">
+        <span class="label">Expenses</span>
+        <span class="value"
+          >{{ currency }} {{ formatAmount(totalExpense) }}</span
+        >
+      </div>
+      <div class="summary-item savings">
+        <span class="label">Savings</span>
+        <span class="value"
+          >{{ currency }} {{ formatAmount(totalSavings) }}</span
+        >
+      </div>
     </div>
 
-    <!-- Filters -->
-    <div class="filters">
-      <input
-        type="month"
-        v-model="selectedMonth"
-        @change="fetchTransactions"
-        class="filter-input"
-      />
-      <select
-        v-model="selectedCategory"
-        @change="fetchTransactions"
-        class="filter-input"
-      >
-        <option value="" style="color: black;">All Categories</option>
-        <option
-          v-for="category in categories"
-          :key="category.id"
-          :value="category.id"
-          style="color: black;"
+    <!-- Filters & Import/Export Buttons -->
+    <div class="filters-container">
+      <div class="filters">
+        <input
+          type="month"
+          v-model="selectedMonth"
+          @change="fetchTransactions"
+          class="filter-input"
+        />
+        <select
+          v-model="selectedCategory"
+          @change="fetchTransactions"
+          class="filter-input"
         >
-          {{ category.name }}
-        </option>
-      </select>
-      <select
-        v-model="selectedType"
-        @change="fetchTransactions"
-        class="filter-input"
-      >
-        <option value="" style="color: black;">All</option>
-        <option value="income" style="color: black;">Income</option>
-        <option value="expense" style="color: black;">Expense</option>
-      </select>
+          <option value="" style="color: black">All Categories</option>
+          <option
+            v-for="category in categories"
+            :key="category.id"
+            :value="category.id"
+            style="color: black"
+          >
+            {{ category.name }}
+          </option>
+        </select>
+        <select
+          v-model="selectedType"
+          @change="fetchTransactions"
+          class="filter-input"
+        >
+          <option value="" style="color: black">All</option>
+          <option value="income" style="color: black">Income</option>
+          <option value="expense" style="color: black">Expense</option>
+        </select>
+      </div>
+
+      <div class="export-buttons">
+        <button class="btn-export" @click="exportTransactions">
+          📤 Export
+        </button>
+        <button class="btn-template" @click="downloadTemplate">
+          📥 Download Template
+        </button>
+        <label class="btn-import">
+          📑 Import <input type="file" ref="fileInput" @change="importTransactions" hidden />
+        </label>
+      </div>
     </div>
 
     <!-- Transactions List -->
     <div class="transactions-list">
-      <table>
+      <table v-if="transactions.length > 0">
         <thead>
           <tr>
             <th>Description</th>
@@ -63,69 +87,161 @@
             <th>Category</th>
             <th>Actor</th>
             <th>Date</th>
-            <th>Proof</th>
+            <!-- <th>Proof</th> -->
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="transaction in transactions" :key="transaction.id">
             <td>{{ transaction.description || "N/A" }}</td>
-            <td :class="transaction.type === 'expense' ? 'text-red' : 'text-green'">
-              Rp {{ transaction.amount.toLocaleString() }}
+            <td
+              :class="
+                transaction.type === 'expense' ? 'text-red' : 'text-green'
+              "
+            >
+              {{ currency }} {{ formatAmount(transaction.amount) }}
             </td>
             <td>{{ transaction.category.name }}</td>
             <td>{{ transaction.actor }}</td>
             <td>{{ transaction.transaction_time }}</td>
-            <td>
-              <a v-if="transaction.proof" :href="`/storage/${transaction.proof}`" target="_blank" class="text-blue-400">
+            <!-- <td>
+              <a
+                v-if="transaction.proof"
+                :href="`/storage/${transaction.proof}`"
+                target="_blank"
+                class="text-blue-400"
+              >
                 📎 View
               </a>
-            </td>
+            </td> -->
             <td>
               <button @click="editTransaction(transaction)">✏️ Edit</button>
-              <button @click="deleteTransaction(transaction.id)" class="text-red">🗑 Delete</button>
+              <br />
+              <button
+                @click="deleteTransaction(transaction.id)"
+                class="text-red"
+              >
+                🗑 Delete
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
+      <p v-else class="text-center text-gray-400 mt-8">No transactions found</p>
     </div>
 
     <!-- Pagination -->
     <div class="pagination">
-      <button @click="prevPage" :disabled="page === 1">⬅ Previous</button>
-      <span>Page {{ page }}</span>
-      <button @click="nextPage">Next ➡</button>
+      <button v-if="page > 1" @click="prevPage">⬅ Previous</button>
+
+      <span v-for="link in transactionsMeta.links" :key="link.label">
+        <button
+          v-if="link.url && !link.label.toLowerCase().includes('previous') && !link.label.toLowerCase().includes('next')"
+          :class="{ 'active-page': link.active }"
+          @click="changePage(link.url)"
+        >
+          {{ link.label }}
+        </button>
+      </span>
+
+      <button v-if="transactionsMeta.next_page_url" @click="nextPage">
+        Next ➡
+      </button>
     </div>
 
     <!-- Transaction Modal -->
     <Teleport to="body">
       <Transition name="modal-fade">
-        <div v-if="showTransactionModal" class="modal-overlay" @click.self="closeModal">
+        <div
+          v-if="showTransactionModal"
+          class="modal-overlay"
+          @click.self="closeModal"
+        >
           <Transition name="modal-scale">
             <div class="modal-content">
               <h2 class="text-3xl font-semibold text-gold mb-4">
                 {{ isEditing ? "Edit Transaction" : "Add Transaction" }}
               </h2>
-              <form @submit.prevent="saveTransaction" class="space-y-4">
+              <form
+                @submit.prevent="saveTransaction"
+                class="space-y-4"
+                ref="transactionForm"
+              >
+                <select v-model="formData.type" required class="input-field">
+                  <option value="income">Income</option>
+                  <option value="expense">Expense</option>
+                </select>
+                <select
+                  v-model="formData.category_id"
+                  required
+                  class="input-field"
+                >
+                  <option
+                    v-for="category in categories"
+                    :key="category.id"
+                    :value="category.id"
+                  >
+                    {{ category.name }}
+                  </option>
+                </select>
+                <!-- Amount Input with Calculator Button -->
                 <div class="input-group">
-                  <select v-model="formData.type" required class="input-field">
-                    <option value="income">Income</option>
-                    <option value="expense">Expense</option>
-                  </select>
+                  <input
+                    type="text"
+                    v-model="formData.formattedAmount"
+                    :placeholder="`Amount (${currency})`"
+                    required
+                    class="input-field"
+                  />
+                  <span class="calculator-btn-wrapper">
+                    <button
+                      type="button"
+                      class="calculator-btn px-4"
+                      @click="openCalculator"
+                    >
+                      🖩
+                    </button>
+                  </span>
                 </div>
-                <div class="input-group">
-                  <select v-model="formData.category_id" required class="input-field">
-                    <option v-for="category in categories" :key="category.id" :value="category.id">
-                      {{ category.name }}
-                    </option>
-                  </select>
-                </div>
-                <input type="number" v-model="formData.amount" placeholder="Amount" required class="input-field" />
-                <input type="text" v-model="formData.description" placeholder="Description (Optional)" class="input-field" />
-                <input type="text" v-model="formData.actor" placeholder="Actor" required class="input-field" />
-                <input type="datetime-local" v-model="formData.transaction_time" required class="input-field" />
-                <input type="file" @change="handleFileUpload" class="input-field" />
+                <input
+                  type="text"
+                  v-model="formData.description"
+                  placeholder="Description (Optional)"
+                  class="input-field"
+                />
+                <!-- Actor selection with "Other" option -->
+                <select v-model="selectedActor" class="input-field">
+                  <option value="" disabled>Select Actor</option>
+                  <option
+                    v-for="member in members"
+                    :key="member.id"
+                    :value="member.name"
+                  >
+                    {{ member.name }}
+                  </option>
+                  <option value="other">Other (Type Manually)</option>
+                </select>
 
+                <!-- Manual actor input field (shown only if "Other" is selected) -->
+                <input
+                  v-if="selectedActor === 'other'"
+                  type="text"
+                  v-model="manualActor"
+                  placeholder="Enter Actor Name"
+                  class="input-field"
+                />
+                <input
+                  type="datetime-local"
+                  v-model="formData.transaction_time"
+                  required
+                  class="input-field"
+                  step="1"
+                />
+                <!-- <input
+                  type="file"
+                  @change="handleFileUpload"
+                  class="input-field"
+                /> -->
                 <button type="submit" class="btn-primary w-full">
                   <span v-if="isLoading" class="spinner"></span>
                   <span v-else>{{ isEditing ? "Update" : "Create" }}</span>
@@ -136,17 +252,87 @@
         </div>
       </Transition>
     </Teleport>
+
+    <!-- Calculator Modal -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div
+          v-if="showCalculator"
+          class="modal-overlay"
+          @click.self="closeCalculator"
+          @keydown.esc="closeCalculator"
+          @keydown.enter="insertCalculatorValue"
+          @keydown="handleKeydown($event)"
+          tabindex="0"
+          @focus="focused = true"
+          @blur="focused = false"
+        >
+          <Transition name="modal-scale">
+            <div class="calculator-content calculator-modal">
+              <h2 class="text-3xl font-semibold text-gold mb-4">Calculator</h2>
+              <div class="calculator-display flex pl-4">
+                <input
+                  ref="calculatorInput"
+                  class="flex-1 overflow-hidden text-lg"
+                  style="
+                    direction: rtl;
+                    text-align: left;
+                    border: none;
+                    background: transparent;
+                    outline: none;
+                  "
+                  v-model="calculatorValue"
+                  readonly
+                />
+                <div class="w-1/6">
+                  <button @click="clearCalculator">C</button>
+                </div>
+              </div>
+              <div class="calculator-buttons">
+                <button @click="appendToCalculator('7')">7</button>
+                <button @click="appendToCalculator('8')">8</button>
+                <button @click="appendToCalculator('9')">9</button>
+                <button @click="deleteLastDigit">&larr;</button>
+
+                <button @click="appendToCalculator('4')">4</button>
+                <button @click="appendToCalculator('5')">5</button>
+                <button @click="appendToCalculator('6')">6</button>
+                <button @click="appendToCalculator('+')">+</button>
+
+                <button @click="appendToCalculator('1')">1</button>
+                <button @click="appendToCalculator('2')">2</button>
+                <button @click="appendToCalculator('3')">3</button>
+                <button @click="appendToCalculator('-')">-</button>
+
+                <button @click="appendToCalculator('0')">0</button>
+                <button @click="appendToCalculator('.')">.</button>
+                <button @click="calculateResult">=</button>
+                <button @click="appendToCalculator('/')">/</button>
+              </div>
+
+              <button
+                class="btn-primary w-full mt-4"
+                @click="insertCalculatorValue"
+              >
+                Insert Amount
+              </button>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, nextTick } from "vue";
 import api from "../services/api";
 import { useAppStore } from "../stores/app";
 import { storeToRefs } from "pinia";
 
 const appStore = useAppStore();
-const { appLoading, isCollapsed, currentGroup, userGroups } = storeToRefs(appStore);
+const { appLoading, isCollapsed, currentGroup, userGroups } =
+  storeToRefs(appStore);
 
 const transactions = ref([]);
 const categories = ref([]);
@@ -158,20 +344,229 @@ const totalIncome = ref(0);
 const totalExpense = ref(0);
 const totalSavings = ref(0);
 const showTransactionModal = ref(false);
+const showCalculator = ref(false);
+const calculatorValue = ref("");
+const calculatorInput = ref(null);
 const isEditing = ref(false);
 const isLoading = ref(false);
+const isLoadingData = ref(true);
+const members = ref([]); // Store fetched members
+const selectedActor = ref(""); // Store selected actor
+const manualActor = ref(""); // Store manually entered actor
+const transactionsMeta = ref({});
+const currency = ref("Rp");
+const fileInput = ref(null);
+
 const formData = ref({
   type: "expense",
-  category_id: "",
+  category_id: categories.value[0]?.id,
+  group_id: currentGroup.value.id,
   amount: "",
+  formattedAmount: "",
   description: "",
   actor: "",
-  transaction_time: new Date().toISOString().slice(0, 16),
+  transaction_time: new Date(
+    new Date().getTime() - new Date().getTimezoneOffset() * 60000
+  )
+    .toISOString()
+    .slice(0, 16),
   proof: null,
 });
 
+const exportTransactions = async () => {
+  isLoadingData.value = true;
+
+  try {
+    const response = await api.get("/transactions/export", {
+      params: { group_id: currentGroup.value.id },
+      responseType: "blob", // Important for downloading files
+    });
+
+    const blob = new Blob([response.data], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "transactions.xlsx";
+    link.click();
+    URL.revokeObjectURL(link.href);
+  } catch (error) {
+    console.error("Failed to export transactions", error);
+  } finally {
+    isLoadingData.value = false;
+  }
+};
+
+const downloadTemplate = async () => {
+  isLoadingData.value = true;
+
+  try {
+    const response = await api.get("/transactions/template", {
+      responseType: "blob",
+    });
+
+    const blob = new Blob([response.data], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "transaction_template.xlsx";
+    link.click();
+    URL.revokeObjectURL(link.href);
+  } catch (error) {
+    console.error("Failed to download template", error);
+  } finally {
+    isLoadingData.value = false;
+  }
+};
+
+const importTransactions = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("group_id", currentGroup.value.id);
+
+  isLoadingData.value = true;
+
+  try {
+    await api.post("/transactions/import?cache=" + new Date().getTime(), formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    alert("Transactions imported successfully!");
+    fetchTransactions();
+  } catch (error) {
+    console.error("Failed to import transactions", error);
+  } finally {
+    event.target.value = null;
+    fileInput.value = null;
+    isLoadingData.value = false;
+  }
+};
+
+const formatAmount = (amount) => {
+  return Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+    useGrouping: true,
+  }).format(amount);
+};
+
+const fetchMembers = async () => {
+  try {
+    if (!currentGroup.value) return;
+
+    const response = await api.get(`/groups/${currentGroup.value.id}/members`);
+
+    members.value = response.data; // Store members in reactive state
+  } catch (error) {
+    console.error("Failed to fetch members", error);
+  }
+};
+
+const openModal = async () => {
+  isEditing.value = false;
+  showTransactionModal.value = true;
+};
+
+const closeModal = () => {
+  showTransactionModal.value = false;
+  resetForm();
+};
+
+const openCalculator = async () => {
+  showCalculator.value = true;
+  calculatorValue.value = "";
+
+  await nextTick(); // Wait for the modal to render before focusing
+  calculatorInput.value?.focus();
+};
+const closeCalculator = () => {
+  showCalculator.value = false;
+};
+const handleKeydown = (event) => {
+  const { key } = event;
+  const calculatorKeys = [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    ".",
+    "/",
+    "*",
+    "-",
+    "+",
+    "=",
+    "Enter",
+    "Backspace",
+    "Escape",
+  ];
+  if (calculatorKeys.includes(key)) {
+    event.preventDefault();
+    if (key === "Enter" || key === "=") {
+      insertCalculatorValue();
+    } else if (key === "Escape") {
+      closeCalculator();
+    } else if (key === "Backspace") {
+      deleteLastDigit();
+    } else {
+      appendToCalculator(key);
+    }
+  }
+};
+
+const appendToCalculator = (value) => {
+  calculatorValue.value += value;
+};
+
+const deleteLastDigit = () => {
+  calculatorValue.value = calculatorValue.value.slice(0, -1);
+};
+
+const clearCalculator = () => {
+  calculatorValue.value = "";
+};
+
+const calculateResult = () => {
+  calculatorValue.value = eval(calculatorValue.value).toString();
+};
+
+const insertCalculatorValue = () => {
+  if (!calculatorValue.value) return;
+  calculateResult();
+  formData.value.formattedAmount = calculatorValue.value;
+  formData.value.amount = calculatorValue.value.replace(/[^0-9.]/g, "");
+  closeCalculator();
+};
+
+const resetForm = () => {
+  formData.value = {
+    type: "expense",
+    category_id: categories.value[0]?.id,
+    group_id: currentGroup.value.id,
+    amount: "",
+    formattedAmount: "",
+    description: "",
+    actor: "",
+    transaction_time: new Date(
+      new Date().getTime() - new Date().getTimezoneOffset() * 60000
+    )
+      .toISOString()
+      .slice(0, 16),
+    proof: null,
+  };
+};
 
 const fetchTransactions = async () => {
+  isLoadingData.value = true;
+
   try {
     if (!currentGroup.value) return;
 
@@ -184,13 +579,23 @@ const fetchTransactions = async () => {
         page: page.value,
       },
     });
-    transactions.value = response.data.data;
-    totalIncome.value = response.data.totalIncome ?? 0;
-    totalExpense.value = response.data.totalExpense ?? 0;
-    totalSavings.value = (totalIncome.value ?? 0) - (totalExpense.value ?? 0);
+
+    transactions.value = response.data.transactions.data;
+    transactionsMeta.value = response.data.transactions;
+    totalIncome.value = response.data.total_income ?? 0;
+    totalExpense.value = response.data.total_expense ?? 0;
+    totalSavings.value = response.data.total_savings ?? 0;
   } catch (error) {
     console.error("Failed to fetch transactions", error);
+  } finally {
+    isLoadingData.value = false;
   }
+};
+
+const changePage = (url) => {
+  const urlObj = new URL(url);
+  page.value = urlObj.searchParams.get("page");
+  fetchTransactions();
 };
 
 const fetchCategories = async () => {
@@ -210,18 +615,25 @@ const fetchCategories = async () => {
 
 const saveTransaction = async () => {
   isLoading.value = true;
-  const formDataObj = new FormData();
-  Object.keys(formData.value).forEach((key) => {
-    formDataObj.append(key, formData.value[key]);
-  });
 
   try {
+    formData.value.actor =
+      selectedActor.value === "other" ? manualActor.value : selectedActor.value;
+
+    const formDataObj = new FormData();
+    Object.keys(formData.value).forEach((key) => {
+      if (formData.value[key] !== null) {
+        formDataObj.append(key, formData.value[key]);
+      }
+    });
+
     if (isEditing.value) {
       await api.put(`/transactions/${formData.value.id}`, formDataObj);
     } else {
       await api.post("/transactions", formDataObj);
     }
-    showTransactionModal.value = false;
+
+    closeModal();
     fetchTransactions();
   } catch (error) {
     console.error("Failed to save transaction", error);
@@ -231,13 +643,43 @@ const saveTransaction = async () => {
 };
 
 const editTransaction = (transaction) => {
-  console.log("Edit transaction:", transaction);
-  // Implement edit logic here (open modal, populate fields, etc.)
+  isEditing.value = true;
+  showTransactionModal.value = true;
+
+  // Set formData with transaction details
+  formData.value = {
+    id: transaction.id,
+    type: transaction.type,
+    category_id: transaction.category.id,
+    group_id: currentGroup.value.id,
+    amount: transaction.amount.toString(), // Store clean numeric value
+    formattedAmount: formatAmount(transaction.amount), // Store formatted amount
+    description: transaction.description || "",
+    transaction_time: transaction.transaction_time,
+    proof: transaction.proof || null,
+  };
+
+  // Handle actor selection logic
+  const memberExists = members.value.some(
+    (member) => member.name === transaction.actor
+  );
+
+  if (memberExists) {
+    selectedActor.value = transaction.actor; // Select actor from the dropdown
+    manualActor.value = ""; // Clear manual actor
+  } else {
+    selectedActor.value = "other"; // Mark as manual input
+    manualActor.value = transaction.actor; // Pre-fill manual input field
+  }
 };
 
 const deleteTransaction = async (id) => {
   if (confirm("Are you sure you want to delete this transaction?")) {
-    await api.delete(`/transactions/${id}`);
+    await api.delete(`/transactions/${id}`, {
+      data: {
+        group_id: currentGroup.value.id,
+      },
+    });
     fetchTransactions();
   }
 };
@@ -254,14 +696,34 @@ const nextPage = () => {
   fetchTransactions();
 };
 
+watch(
+  () => formData.value.formattedAmount,
+  async (newVal) => {
+    if (!newVal) return;
+
+    formData.value.formattedAmount = formatAmount(
+      Number(newVal.replace(/[^\d.-]/g, ""))
+    );
+
+    formData.value.amount = formData.value.formattedAmount.replace(
+      /[^0-9.]/g,
+      ""
+    );
+  }
+);
+
 watch(currentGroup, async () => {
   await fetchCategories();
   await fetchTransactions();
+  await fetchMembers();
+  resetForm();
 });
 
 onMounted(async () => {
   await fetchTransactions();
   await fetchCategories();
+  await fetchMembers();
+  resetForm();
 });
 </script>
 
@@ -278,12 +740,40 @@ onMounted(async () => {
 }
 .summary-cards {
   display: flex;
+  justify-content: space-between;
+  margin: 20px 0;
   gap: 20px;
 }
+
 .summary-item {
-  padding: 10px 20px;
+  flex: 1;
+  padding: 8px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  text-align: center;
+  color: white;
+  font-size: 18px;
+}
+
+.summary-item.income {
+  background: #22c55e;
+}
+
+.summary-item.expense {
+  background: #ef4444;
+}
+
+.summary-item.savings {
+  background: #007bd3;
+}
+
+.summary-item .label {
+  font-weight: bold;
+}
+
+.summary-item .value {
+  font-size: 20px;
+  margin-top: 5px;
+  display: block;
 }
 .text-green {
   color: #22c55e;
@@ -317,9 +807,139 @@ onMounted(async () => {
   text-align: left;
 }
 .pagination {
-  margin-top: 20px;
   display: flex;
+  gap: 8px;
   justify-content: center;
+  margin-top: 20px;
+}
+
+.pagination button {
+  padding: 6px 12px;
+  border: 1px solid #eab308;
+  background: transparent;
+  color: #eab308;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.pagination button.active-page {
+  background: #eab308;
+  color: black;
+  font-weight: bold;
+}
+.input-field {
+  width: 100%;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.915);
+  border: 1px solid #eab308;
+  border-radius: 8px;
+  color: rgb(70, 70, 70);
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s ease-in-out;
+}
+.input-field:focus {
+  border-color: #facc15 !important;
+}
+.border-red-500 {
+  border-color: red !important;
+}
+.form-required:invalid {
+  border-color: red !important;
+}
+
+.form-required:invalid:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.5);
+}
+/* .input-group {
+  display: flex;
+  align-items: center;
+  transition: border-color 0.2s ease-in-out;
+}
+.input-group > *:not(:last-child) {
+  margin-right: 20px;
+}
+.input-group > *:last-child {
+  margin-left: auto;
+} */
+
+.input-group {
+  display: flex;
   gap: 10px;
+}
+.calculator-btn {
+  width: 100%;
+  border: 1px solid #eab308;
+  border-radius: 8px;
+  color: rgb(70, 70, 70);
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s ease-in-out;
+  background: #eab308;
+  cursor: pointer;
+  font-size: 32px;
+}
+.calculator-modal {
+  width: 300px;
+  text-align: center;
+}
+.calculator-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+.calculator-buttons button {
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.calculator-content {
+  background: rgba(255, 255, 255);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(255, 215, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 380px;
+  text-align: center;
+  overflow: hidden;
+  transition: height 0.3s ease-in-out;
+}
+
+.calculator-content .calculator-display {
+  height: 3rem;
+  font-size: 32px;
+  border: 1px solid #eab308;
+  border-radius: 8px;
+}
+.filters-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.export-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-export, .btn-template, .btn-import {
+  padding: 8px 12px;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-import input {
+  display: none;
+}
+
+.btn-export:hover, .btn-template:hover, .btn-import:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 </style>

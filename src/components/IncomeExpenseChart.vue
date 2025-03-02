@@ -6,24 +6,31 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted,defineProps } from "vue";
 import Chart from "chart.js/auto";
-import api from "../services/api";
+
+const props = defineProps({
+  income: {
+    type: Number,
+    required: true,
+  },
+  expenses: {
+    type: Number,
+    required: true,
+  },
+});
 
 const chartCanvas = ref(null);
 
 onMounted(async () => {
   try {
-    const response = await api.get("/income-expenses");
-    const { income, expenses } = response.data;
-
     new Chart(chartCanvas.value, {
       type: "doughnut",
       data: {
         labels: ["Income", "Expenses"],
         datasets: [
           {
-            data: [income, expenses],
+            data: [props.income, props.expenses],
             backgroundColor: ["#22c55e", "#ef4444"],
           },
         ],

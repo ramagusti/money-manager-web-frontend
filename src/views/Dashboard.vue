@@ -1,39 +1,33 @@
 <template>
+  <div v-if="isLoadingData" class="loading-container">
+    <div class="loading-spinner"></div>
+  </div>
   <div class="dashboard-container">
     <!-- <Sidebar /> -->
 
-    <div
-      class="dashboard-content"
-    >
-      <!-- If no groups exist, show "Create Group" UI -->
+    <div class="dashboard-content">
+      <!-- No Group Found -->
       <div
-        v-if="!userGroups || userGroups?.length === 0"
-        class="no-group-container text-white flex items-center justify-center h-screen"
+        v-if="!userGroups || userGroups.length === 0"
+        class="no-group-container"
       >
-        <div class="text-center">
-          <h2 class="text-3xl font-bold mb-2">You don't have any groups yet.</h2>
-          <p class="mb-4 text-gray-300">
-            Create a group to start managing transactions.
-          </p>
-          <button
-            @click="showCreateGroupModal = true"
-            class="btn-primary mx-auto max-w-max"
-          >
-            ➕ Create Group
-          </button>
-        </div>
+        <h2>You don't have any groups yet.</h2>
+        <p>Create a group to start managing transactions.</p>
+        <button @click="showCreateGroupModal = true" class="btn-primary">
+          ➕ Create Group
+        </button>
       </div>
 
-      <!-- Show Dashboard only if groups exist -->
+      <!-- Dashboard Widgets -->
       <div v-else class="dashboard-widgets">
-        <BalanceCard />
-        <RecentTransactions />
-        <IncomeExpenseChart />
-        <SpendingGoals />
+        <BalanceCard :balance="balance" />
+        <RecentTransactions :transactions="transactions" />
+        <IncomeExpenseChart :income="income" :expenses="expenses" />
+        <SpendingGoals :spendingGoals="spendingGoals" />
       </div>
     </div>
 
-    <!-- Styled Group Creation Modal -->
+    <!-- Create Group Modal -->
     <Teleport to="body">
       <Transition name="modal-fade">
         <div
@@ -41,50 +35,22 @@
           class="modal-overlay"
           @click.self="closeModal"
         >
-          <Transition name="modal-scale">
-            <div class="modal-content" ref="modalBox">
-              <h2 class="text-3xl font-semibold text-gold mb-4">
-                Create a New Group
-              </h2>
-              <form @submit.prevent="createGroup" class="space-y-4">
-                <div class="input-group">
-                  <input
-                    type="text"
-                    v-model="groupName"
-                    placeholder="Group Name"
-                    class="input-field"
-                    :class="{ 'border-red-500': errors.groupName }"
-                    @focus="clearError"
-                    required
-                  />
-                  <Transition name="fade">
-                    <p
-                      v-if="errors.groupName"
-                      class="text-red-400 text-sm mt-1"
-                    >
-                      {{ errors.groupName }}
-                    </p>
-                  </Transition>
-                </div>
-
-                <button
-                  type="submit"
-                  class="btn-primary w-full"
-                  :disabled="isLoading"
-                >
-                  <span v-if="isLoading" class="spinner"></span>
-                  <span v-else> Create </span>
-                </button>
-                <!-- <button
-                  @click="closeModal"
-                  type="button"
-                  class="btn-danger w-full"
-                >
-                  Cancel
-                </button> -->
-              </form>
-            </div>
-          </Transition>
+          <div class="modal-content">
+            <h2>Create a New Group</h2>
+            <form @submit.prevent="createGroup">
+              <input
+                type="text"
+                v-model="groupName"
+                placeholder="Group Name"
+                class="input-field"
+                required
+              />
+              <button type="submit" class="btn-primary" :disabled="isLoading">
+                <span v-if="isLoading" class="spinner"></span>
+                <span v-else>Create</span>
+              </button>
+            </form>
+          </div>
         </div>
       </Transition>
     </Teleport>
@@ -103,28 +69,70 @@ import SpendingGoals from "../components/SpendingGoals.vue";
 import api from "../services/api";
 
 const appStore = useAppStore();
-const { isCollapsed, userGroups, currentGroup, showCreateGroupModal } = storeToRefs(appStore);
+const { isCollapsed, userGroups, currentGroup, showCreateGroupModal } =
+  storeToRefs(appStore);
 
 const groupName = ref("");
 const isLoading = ref(false);
 const errors = ref({ groupName: "" });
 const modalBox = ref(null);
+const isLoadingData = ref(true);
+const balance = ref(0);
+const transactions = ref([]);
+const income = ref(0);
+const expenses = ref(0);
+const spendingGoals = ref([]);
 
-// // Fetch groups on mount
-// onMounted(async () => {
-//   try {
-//     const response = await api.get("/groups");
-//     appStore.setUserGroups(response.data);
+const fetchBalances = async () => {
+  try {
+    const response = await api.get("/balance");
+    balance.value = response.data.balance;
+  } catch (error) {
+    console.error("Failed to fetch balance:", error);
+  }
+};
 
-//     if (userGroups.value?.length > 0 && !currentGroup.value) {
-//       appStore.setCurrentGroup(userGroups.value[0]);
-//     }
-//   } catch (error) {
-//     console.error("Error fetching groups:", error);
-//   } finally {
-//     appStore.setLoading(false);
-//   }
-// });
+const fetchRecentTransactions = async () => {
+  try {
+    const response = await api.get(
+      `/transactions?limit=5&group_id=${currentGroup.value.id}`
+    );
+    transactions.value = response.data.transactions.data;
+    income.value = Number(response.data.total_income);
+    expenses.value = Number(response.data.total_expense);
+  } catch (error) {
+    console.error("Failed to fetch transactions:", error);
+  }
+};
+
+const fetchSpendingGoals = async () => {
+  try {
+    const response = await api.get("/spending-goals");
+    spendingGoals.value = response.data.goals;
+  } catch (error) {
+    console.error("Failed to fetch spending goals:", error);
+  }
+};
+
+onMounted(async () => {
+  try {
+    const response = await api.get("/groups");
+    appStore.setUserGroups(response.data);
+
+    if (userGroups.value?.length > 0 && !currentGroup.value) {
+      appStore.setCurrentGroup(userGroups.value[0]);
+    }
+
+    await fetchBalances();
+    await fetchRecentTransactions();
+    await fetchSpendingGoals();
+  } catch (error) {
+    console.error("Error fetching groups:", error);
+  } finally {
+    appStore.setLoading(false);
+    isLoadingData.value = false;
+  }
+});
 
 // Create Group
 const createGroup = async () => {
@@ -162,8 +170,8 @@ const closeModal = () => {
 <style scoped>
 .dashboard-container {
   display: flex;
-  min-height: 100vh;
-  background-color: #111827; /* Deep dark background */
+  flex-direction: column;
+  padding: 20px;
 }
 
 .dashboard-content {
@@ -173,7 +181,7 @@ const closeModal = () => {
 
 .dashboard-widgets {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
 }
 
@@ -286,6 +294,13 @@ const closeModal = () => {
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  .dashboard-widgets {
+    grid-template-columns: 1fr;
   }
 }
 </style>

@@ -6,18 +6,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import api from "../services/api";
+import { defineProps } from "vue";
 
-const balance = ref(0);
-
-onMounted(async () => {
-  try {
-    const response = await api.get("/balance");
-    balance.value = response.data.balance;
-  } catch (error) {
-    console.error("Failed to fetch balance:", error);
-  }
+const props = defineProps({
+  balance: {
+    type: Number,
+    required: true,
+  },
 });
 
 // Format balance based on user's locale

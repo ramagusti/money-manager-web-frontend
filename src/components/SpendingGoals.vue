@@ -11,18 +11,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import api from "../services/api";
+import { defineProps } from "vue";
 
-const spendingGoals = ref([]);
-
-onMounted(async () => {
-  try {
-    const response = await api.get("/spending-goals");
-    spendingGoals.value = response.data.goals;
-  } catch (error) {
-    console.error("Failed to fetch spending goals:", error);
-  }
+const props = defineProps({
+  spendingGoals: {
+    type: Array,
+    required: true,
+  },
 });
 </script>
 

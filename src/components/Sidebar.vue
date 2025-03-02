@@ -36,12 +36,12 @@
       <router-link to="/transactions" class="nav-link" active-class="active">
         💳 <span v-if="!isCollapsed">Transactions</span>
       </router-link>
-      <router-link to="/reports" class="nav-link" active-class="active">
+      <!-- <router-link to="/reports" class="nav-link" active-class="active">
         📊 <span v-if="!isCollapsed">Reports</span>
       </router-link>
       <router-link to="/settings" class="nav-link" active-class="active">
         ⚙️ <span v-if="!isCollapsed">Settings</span>
-      </router-link>
+      </router-link> -->
     </nav>
 
     <!-- Logout Button -->
@@ -88,7 +88,7 @@ const updateGroup = () => {
     appStore.setShowCreateGroupModal(true);
     return;
   }
-  appStore.setCurrentGroup(currentGroup.value);
+  appStore.setCurrentGroup(userGroups.value.find(g => g.id === selectedGroup.value));
 };
 
 const logout = () => {
