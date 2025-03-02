@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          node-version: 20
 
       - name: Deploy to EC2
         env:
@@ -24,7 +26,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST << 'EOF'
             cd /var/www/money-manager-web-frontend
             sudo git pull origin main
-            sudo npm install --production
+            sudo npm install
             sudo npm run build
             sudo systemctl restart nginx
           EOF
