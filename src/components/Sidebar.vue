@@ -29,7 +29,7 @@
     <h2 v-if="!isCollapsed" class="sidebar-title mt-6">💰 Money Manager</h2>
 
     <!-- Navigation Links -->
-    <nav class="mt-2">
+    <nav v-if="!isMobile" class="mt-2">
       <router-link to="/dashboard" class="nav-link" active-class="active">
         🏠 <span v-if="!isCollapsed">Dashboard</span>
       </router-link>
@@ -66,6 +66,8 @@ const router = useRouter();
 const appStore = useAppStore();
 const selectedGroup = ref(null);
 
+const isMobile = ref(window.innerWidth <= 768);
+
 // Extract reactive state from the store as refs
 const { appLoading, isCollapsed, userGroups, currentGroup } = storeToRefs(appStore);
 
@@ -101,7 +103,7 @@ const logout = () => {
 /* Sidebar */
 .sidebar {
   width: 260px;
-  height: 100vh;
+  height: 100%;
   position: fixed;
   display: flex;
   flex-direction: column;
@@ -122,6 +124,29 @@ const logout = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+/* Responsive Sidebar */
+@media (max-width: 768px) {
+  .sidebar {
+    padding: 8px;
+  }
+
+  .sidebar.collapsed {
+    width: 54px !important;
+  }
+
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px;
+  }
+
+  .logout-container {
+    width: 80%;
+    margin: 0 auto;
+  }
 }
 
 /* Group Select */

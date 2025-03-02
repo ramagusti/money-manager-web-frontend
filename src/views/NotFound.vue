@@ -1,8 +1,12 @@
 <template>
-  <div class="flex flex-col items-center justify-center h-screen text-center">
-    <h1 class="text-6xl font-bold text-gold">404</h1>
-    <p class="text-gray-300 text-xl mt-2">Oops! Page not found.</p>
-    <router-link to="/" class="btn-primary mt-6">Go Back Home</router-link>
+  <div class="flex items-center justify-center h-screen">
+    <div class="text-center">
+      <h1 class="text-6xl font-bold text-gold">404</h1>
+      <p class="text-gray-300 text-xl mt-2">Oops! Page not found.</p>
+      <div class="mt-6">
+        <router-link to="/" class="btn-primary">Go Back Home</router-link>
+      </div>
+    </div>
   </div>
 </template>
 

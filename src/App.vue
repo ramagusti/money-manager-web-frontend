@@ -1,8 +1,5 @@
 <template>
   <div>
-    <!-- Header (Shown only outside dashboard & transactions) -->
-    <Header v-if="!['/dashboard', '/transactions'].includes($route.path)" />
-
     <!-- Authentication Modals -->
     <LoginModal :isOpen="showAuthModal && $route.path === '/login'" />
     <SignupModal :isOpen="showAuthModal && $route.path === '/signup'" />
@@ -14,10 +11,8 @@
 
       <!-- Page Content -->
       <div
-        :class="isDashboard ? 'app-content' : ''"
-        :style="
-          isDashboard ? { 'margin-left': isCollapsed ? '110px' : '240px' } : {}
-        "
+        class="app-content"
+        :class="{ 'collapsed': isCollapsed, 'mobile-view': isMobile }"
       >
         <router-view />
       </div>
@@ -31,11 +26,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useAppStore } from "./stores/app";
 import { storeToRefs } from "pinia";
-import Header from "./components/Header.vue";
 import Sidebar from "./components/Sidebar.vue";
 import LoginModal from "./components/LoginModal.vue";
 import SignupModal from "./components/SignupModal.vue";
@@ -43,12 +37,31 @@ import SignupModal from "./components/SignupModal.vue";
 const appStore = useAppStore();
 const { appLoading, isCollapsed, currentGroup } = storeToRefs(appStore);
 const router = useRouter();
+const isMobile = ref(window.innerWidth <= 768);
+
 const isDashboard = computed(() =>
   ["/dashboard", "/transactions"].includes(router.currentRoute.value.path)
 );
 
 const showAuthModal = computed(() => {
   return ["/login", "/signup"].includes(router.currentRoute.value.path);
+});
+
+// Update isMobile state on resize
+const handleResize = () => {
+  isMobile.value = window.innerWidth <= 768;
+  if (isMobile.value) {
+    appStore.setCollapsed(true);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener("resize", handleResize);
+  handleResize();
+});
+
+watch(isCollapsed, (newVal) => {
+  document.documentElement.style.setProperty("--sidebar-width", newVal ? "80px" : "240px");
 });
 </script>
 
@@ -142,6 +155,7 @@ body::before {
   border-top: 3px solid transparent;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
+  z-index: 20;
 }
 @keyframes spin {
   0% {
@@ -162,12 +176,25 @@ body::before {
 .app-content {
   flex-grow: 1;
   padding: 16px;
+  transition: margin-left 0.3s ease-in-out;
+  margin-left: var(--sidebar-width, 240px);
+}
+
+/* Collapsed Sidebar */
+.app-content.collapsed {
+  margin-left: 80px;
+}
+
+/* Mobile View */
+.app-content.mobile-view {
+  margin-left: 0;
 }
 
 /* Responsive Sidebar */
 @media (max-width: 768px) {
   .app-content {
-    margin-left: 0 !important;
+    margin-left: 28px !important;
+    padding: 12px;
   }
 }
 /* Overlay Animation */
