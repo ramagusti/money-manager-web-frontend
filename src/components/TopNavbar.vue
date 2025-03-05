@@ -2,7 +2,7 @@
   <header class="top-navbar bg-opacity-25 backdrop-blur-md">
     <div class="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
       <router-link to="/" class="text-2xl font-bold text-white">
-        Money Manager
+        PiggyBang
       </router-link>
       <nav>
         <template v-if="authStore.isAuthenticated">

@@ -1,7 +1,16 @@
 <template>
   <header class="header">
     <div class="header-container">
-      <router-link to="/" class="brand">Money Manager</router-link>
+      <router-link to="/" class="brand">
+        <div class="header-title flex flex-row items-center m-auto">
+          <img
+            src="/images/PiggyBang.svg"
+            alt="PiggyBang Logo"
+            class="sidebar-logo w-8 h-8"
+          />
+          <span class="brand ml-2"> PiggyBang </span>
+        </div>
+      </router-link>
 
       <!-- Mobile Menu Toggle -->
       <button class="menu-toggle" @click="toggleMenu">☰</button>
@@ -80,6 +89,7 @@ nav {
   padding: 10px 14px;
   border-radius: 8px;
   transition: 0.3s;
+  font-size: calc(16px * var(--scale-factor));
 }
 
 .btn-header:hover {

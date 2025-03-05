@@ -1,7 +1,7 @@
 <template>
   <section class="features-container">
     <div class="features-content">
-      <h2 class="features-title">Why Choose Money Manager?</h2>
+      <h2 class="features-title">Why Choose PiggyBang?</h2>
       <div class="features-grid">
         <TransitionGroup
           tag="div"

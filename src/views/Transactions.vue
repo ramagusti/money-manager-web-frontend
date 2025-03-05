@@ -5,7 +5,7 @@
   <div class="transactions-container">
     <!-- Header & Summary -->
     <div class="transactions-header">
-      <h2 class="text-3xl font-bold text-white">📜 Transactions</h2>
+      <h2 class="font-bold text-white">📜 Transactions</h2>
       <button class="btn-primary" @click="openModal">➕ Add Transaction</button>
     </div>
     <div class="summary-cards">
@@ -72,14 +72,20 @@
           📥 Download Template
         </button>
         <label class="btn-import">
-          📑 Import <input type="file" ref="fileInput" @change="importTransactions" hidden />
+          📑 Import
+          <input
+            type="file"
+            ref="fileInput"
+            @change="importTransactions"
+            hidden
+          />
         </label>
       </div>
     </div>
 
     <!-- Transactions List -->
     <div class="transactions-list">
-      <table v-if="transactions.length > 0">
+      <table v-if="transactions.length > 0" class="responsive-table">
         <thead>
           <tr>
             <th>Description</th>
@@ -136,7 +142,11 @@
 
       <span v-for="link in transactionsMeta.links" :key="link.label">
         <button
-          v-if="link.url && !link.label.toLowerCase().includes('previous') && !link.label.toLowerCase().includes('next')"
+          v-if="
+            link.url &&
+            !link.label.toLowerCase().includes('previous') &&
+            !link.label.toLowerCase().includes('next')
+          "
           :class="{ 'active-page': link.active }"
           @click="changePage(link.url)"
         >
@@ -431,9 +441,13 @@ const importTransactions = async (event) => {
   isLoadingData.value = true;
 
   try {
-    await api.post("/transactions/import?cache=" + new Date().getTime(), formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    await api.post(
+      "/transactions/import?cache=" + new Date().getTime(),
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    );
     alert("Transactions imported successfully!");
     fetchTransactions();
   } catch (error) {
@@ -729,29 +743,32 @@ onMounted(async () => {
 
 <style scoped>
 .transactions-container {
-  padding: 20px;
+  padding: calc(20px * var(--scale-factor, 1));
   color: white;
+  font-size: calc(16px * var(--scale-factor, 1));
+  margin-left: calc(80px * var(--scale-factor, 1));
 }
 .transactions-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: calc(20px * var(--scale-factor, 1));
+  font-size: calc(28px * var(--scale-factor, 1));
 }
 .summary-cards {
   display: flex;
+  flex-wrap: wrap;
+  gap: calc(10px * var(--scale-factor, 1));
   justify-content: space-between;
-  margin: 20px 0;
-  gap: 20px;
+  margin-bottom: calc(20px * var(--scale-factor, 1));
 }
 
 .summary-item {
   flex: 1;
-  padding: 8px;
-  border-radius: 8px;
+  padding: calc(8px * var(--scale-factor, 1));
+  border-radius: calc(8px * var(--scale-factor, 1));
   text-align: center;
-  color: white;
-  font-size: 18px;
+  font-size: calc(14px * var(--scale-factor, 1));
 }
 
 .summary-item.income {
@@ -913,11 +930,20 @@ onMounted(async () => {
   border: 1px solid #eab308;
   border-radius: 8px;
 }
+
 .filters-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
+  gap: 10px;
+}
+
+.filters {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2px;
 }
 
 .export-buttons {
@@ -925,7 +951,10 @@ onMounted(async () => {
   gap: 10px;
 }
 
-.btn-export, .btn-template, .btn-import {
+.btn-export,
+.btn-template,
+.btn-import {
+  text-align: center;
   padding: 8px 12px;
   font-size: 14px;
   background: rgba(255, 255, 255, 0.1);
@@ -939,7 +968,70 @@ onMounted(async () => {
   display: none;
 }
 
-.btn-export:hover, .btn-template:hover, .btn-import:hover {
+.btn-export:hover,
+.btn-template:hover,
+.btn-import:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive Table */
+.responsive-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: calc(14px * var(--scale-factor, 1));
+}
+.responsive-table th,
+.responsive-table td {
+  padding: calc(10px * var(--scale-factor, 1));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  :root {
+    --scale-factor: 0.8;
+  }
+  .transactions-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .summary-cards {
+    flex-direction: column;
+  }
+  .responsive-table {
+    font-size: 12px;
+  }
+  .filters-container {
+    flex-direction: column; /* Stack items vertically */
+    align-items: stretch; /* Stretch to full width */
+  }
+
+  .filters,
+  .export-buttons {
+    width: 100%; /* Make them take full width */
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .filter-input,
+  .btn-export,
+  .btn-template,
+  .btn-import {
+    width: 100%; /* Ensure full width on mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --scale-factor: 0.7;
+  }
+  .transactions-container {
+    padding: 10px;
+  }
+  .summary-item {
+    font-size: 12px;
+  }
 }
 </style>

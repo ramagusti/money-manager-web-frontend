@@ -78,7 +78,7 @@ router.beforeEach(async (to, from, next) => {
 });
 
 router.afterEach((to) => {
-  document.title = to.meta.title || "Money Manager";
+  document.title = to.meta.title || "PiggyBang";
 });
 
 export default router;

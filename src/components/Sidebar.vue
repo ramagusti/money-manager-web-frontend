@@ -1,12 +1,12 @@
 <template>
-  <aside class="sidebar" :class="{ collapsed: isCollapsed }">
+  <aside
+    class="sidebar"
+    :class="{ collapsed: isCollapsed, 'mobile-open': isMobile }"
+  >
     <!-- Sidebar Header -->
     <div class="sidebar-header">
       <!-- Sidebar Toggle Button -->
-      <button @click="toggleSidebar" class="toggle-btn">
-        <span v-if="isCollapsed">➡️</span>
-        <span v-else>⬅️</span>
-      </button>
+      <button @click="toggleSidebar" class="toggle-btn text-white">☰</button>
 
       <!-- Group Selection -->
       <div v-if="!isCollapsed">
@@ -16,20 +16,38 @@
           @change="updateGroup"
           class="group-select"
         >
-          <option v-for="group in userGroups" :key="group.id" :value="group.id" class="text-black">
+          <option
+            v-for="group in userGroups"
+            :key="group.id"
+            :value="group.id"
+            class="text-black"
+          >
             {{ group.name }}
           </option>
-          <option value="create-new" class="text-black">Create New Group</option>
+          <option value="create-new" class="text-black">
+            Create New Group
+          </option>
         </select>
         <span v-else class="text-white">No Group</span>
       </div>
     </div>
 
     <!-- App Title -->
-    <h2 v-if="!isCollapsed" class="sidebar-title mt-6">💰 Money Manager</h2>
+    <div
+      v-if="!isCollapsed"
+      class="sidebar-title mt-6 flex flex-row items-center m-auto"
+    >
+      <img
+        v-if="!isCollapsed"
+        src="/images/PiggyBang.svg"
+        alt="PiggyBang Logo"
+        class="sidebar-logo w-8 h-8"
+      />
+      <span class="text-white ml-2"> PiggyBang </span>
+    </div>
 
     <!-- Navigation Links -->
-    <nav v-if="!isMobile" class="mt-2">
+    <nav class="mt-2">
       <router-link to="/dashboard" class="nav-link" active-class="active">
         🏠 <span v-if="!isCollapsed">Dashboard</span>
       </router-link>
@@ -59,17 +77,15 @@ import { useAuthStore } from "../stores/auth";
 import { useAppStore } from "../stores/app";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
-import api from "../services/api";
 
 const authStore = useAuthStore();
 const router = useRouter();
 const appStore = useAppStore();
 const selectedGroup = ref(null);
-
 const isMobile = ref(window.innerWidth <= 768);
 
 // Extract reactive state from the store as refs
-const { appLoading, isCollapsed, userGroups, currentGroup } = storeToRefs(appStore);
+const { isCollapsed, userGroups, currentGroup } = storeToRefs(appStore);
 
 watch(currentGroup, async () => {
   selectedGroup.value = currentGroup.value.id;
@@ -90,7 +106,9 @@ const updateGroup = () => {
     appStore.setShowCreateGroupModal(true);
     return;
   }
-  appStore.setCurrentGroup(userGroups.value.find(g => g.id === selectedGroup.value));
+  appStore.setCurrentGroup(
+    userGroups.value.find((g) => g.id === selectedGroup.value)
+  );
 };
 
 const logout = () => {

@@ -1,6 +1,7 @@
 <template>
   <div class="balance-card">
-    <h3>💰 Account Balance</h3>
+    <!-- <h3>💰 Account Balance</h3> -->
+    <p class="balance-title">💰 Account Balance</p>
     <p class="balance">{{ formatCurrency(balance) }}</p>
   </div>
 </template>
@@ -25,19 +26,24 @@ const formatCurrency = (amount) => {
 </script>
 
 <style scoped>
+.balance-title {
+  font-size: calc(24px * var(--scale-factor, 1));
+  font-weight: bold;  
+}
+
 .balance-card {
-  background: #1e293b;
-  padding: 20px;
-  border-radius: 12px;
+  /* background: #1e293b; */
+  /* padding: 20px; */
+  /* border-radius: 12px; */
   color: white;
   text-align: center;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); */
 }
 
 .balance {
-  font-size: 2rem;
+  font-size: calc(24px * var(--scale-factor, 1));
   font-weight: bold;
-  margin-top: 10px;
+  margin-top: 4px;
   color: #eab308;
 }
 </style>

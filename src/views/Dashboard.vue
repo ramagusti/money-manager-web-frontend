@@ -6,6 +6,13 @@
     <!-- <Sidebar /> -->
 
     <div class="dashboard-content">
+      <div class="dashboard-header">
+        <h2 class="font-bold text-white">💸 Dashboard</h2>
+        <div>
+          <BalanceCard class="p-2" :balance="balance" />
+        </div>
+      </div>
+
       <!-- No Group Found -->
       <div
         v-if="!userGroups || userGroups.length === 0"
@@ -18,12 +25,16 @@
         </button>
       </div>
 
-      <!-- Dashboard Widgets -->
-      <div v-else class="dashboard-widgets">
-        <BalanceCard :balance="balance" />
-        <RecentTransactions :transactions="transactions" />
-        <IncomeExpenseChart :income="income" :expenses="expenses" />
-        <SpendingGoals :spendingGoals="spendingGoals" />
+      <div v-else>
+        <SavingGoals class="mb-8" :income="income" :expenses="expenses" />
+        
+        <!-- Dashboard Widgets -->
+        <div class="dashboard-widgets">
+          <!-- <BalanceCard :balance="balance" /> -->
+          <RecentTransactions :transactions="transactions" />
+          <IncomeExpenseChart :income="income" :expenses="expenses" />
+          <!-- <SavingGoals :income="income" :expenses="expenses" /> -->
+        </div>
       </div>
     </div>
 
@@ -65,79 +76,64 @@ import Sidebar from "../components/Sidebar.vue";
 import BalanceCard from "../components/BalanceCard.vue";
 import RecentTransactions from "../components/RecentTransactions.vue";
 import IncomeExpenseChart from "../components/IncomeExpenseChart.vue";
-import SpendingGoals from "../components/SpendingGoals.vue";
+import SavingGoals from "../components/SavingGoals.vue";
 import api from "../services/api";
 
 const appStore = useAppStore();
-const { isCollapsed, userGroups, currentGroup, showCreateGroupModal } =
+const { userGroups, currentGroup, showCreateGroupModal } =
   storeToRefs(appStore);
 
 const groupName = ref("");
 const isLoading = ref(false);
-const errors = ref({ groupName: "" });
-const modalBox = ref(null);
 const isLoadingData = ref(true);
 const balance = ref(0);
 const transactions = ref([]);
 const income = ref(0);
 const expenses = ref(0);
-const spendingGoals = ref([]);
+const savingGoals = ref([]);
 
-const fetchBalances = async () => {
+const fetchDashboardData = async () => {
   try {
-    const response = await api.get("/balance");
-    balance.value = response.data.balance;
-  } catch (error) {
-    console.error("Failed to fetch balance:", error);
-  }
-};
+    const [balanceResponse, transactionsResponse, goalsResponse] =
+      await Promise.all([
+        // api.get("/balance"),
+        [],
+        api.get(`/transactions?limit=5&group_id=${currentGroup.value?.id}`),
+        // api.get("/saving-goals"),
+        [],
+      ]);
 
-const fetchRecentTransactions = async () => {
-  try {
-    const response = await api.get(
-      `/transactions?limit=5&group_id=${currentGroup.value.id}`
-    );
-    transactions.value = response.data.transactions.data;
-    income.value = Number(response.data.total_income);
-    expenses.value = Number(response.data.total_expense);
+    // balance.value = balanceResponse.data.balance;
+    transactions.value = transactionsResponse.data.transactions.data;
+    income.value = Number(transactionsResponse.data.total_income);
+    expenses.value = Number(transactionsResponse.data.total_expense);
+    // savingGoals.value = goalsResponse.data.goals;
   } catch (error) {
-    console.error("Failed to fetch transactions:", error);
-  }
-};
-
-const fetchSpendingGoals = async () => {
-  try {
-    const response = await api.get("/spending-goals");
-    spendingGoals.value = response.data.goals;
-  } catch (error) {
-    console.error("Failed to fetch spending goals:", error);
+    console.error("Error fetching dashboard data:", error);
+  } finally {
+    isLoadingData.value = false;
   }
 };
 
 onMounted(async () => {
   try {
-    const response = await api.get("/groups");
-    appStore.setUserGroups(response.data);
+    // const response = await api.get("/groups");
+    // appStore.setUserGroups(response.data);
 
     if (userGroups.value?.length > 0 && !currentGroup.value) {
       appStore.setCurrentGroup(userGroups.value[0]);
     }
 
-    await fetchBalances();
-    await fetchRecentTransactions();
-    await fetchSpendingGoals();
+    await fetchDashboardData();
   } catch (error) {
     console.error("Error fetching groups:", error);
-  } finally {
-    appStore.setLoading(false);
-    isLoadingData.value = false;
   }
 });
 
 // Create Group
 const createGroup = async () => {
   if (!groupName.value.trim()) {
-    errors.value.groupName = "Group name is required.";
+    alert("Group name is required.");
     return;
   }
 
@@ -149,21 +145,14 @@ const createGroup = async () => {
     appStore.setShowCreateGroupModal(false);
   } catch (error) {
     console.error("Failed to create group:", error);
-    errors.value.groupName = "Failed to create group. Try again.";
   } finally {
     isLoading.value = false;
   }
 };
 
-// Clear error message
-const clearError = () => {
-  errors.value.groupName = "";
-};
-
 // Close modal
 const closeModal = () => {
   appStore.setShowCreateGroupModal(false);
-  errors.value.groupName = "";
 };
 </script>
 
@@ -171,18 +160,29 @@ const closeModal = () => {
 .dashboard-container {
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  min-height: 100vh;
+  padding: calc(14px * var(--scale-factor, 1));
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: calc(20px * var(--scale-factor, 1));
+  font-size: calc(28px * var(--scale-factor, 1));
 }
 
 .dashboard-content {
   flex-grow: 1;
-  padding: 24px;
+  /* padding: 24px; */
+  margin-left: calc(80px * var(--scale-factor, 1));
 }
 
 .dashboard-widgets {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
+  font-size: calc(14px * var(--scale-factor, 1));
 }
 
 /* Overlay Animation */
@@ -301,6 +301,12 @@ const closeModal = () => {
 @media (max-width: 768px) {
   .dashboard-widgets {
     grid-template-columns: 1fr;
+  }
+  
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
 }
 </style>

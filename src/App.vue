@@ -1,18 +1,22 @@
 <template>
-  <div>
+  <div class="app-container">
     <!-- Authentication Modals -->
     <LoginModal :isOpen="showAuthModal && $route.path === '/login'" />
     <SignupModal :isOpen="showAuthModal && $route.path === '/signup'" />
 
     <!-- Main Layout -->
-    <div v-if="!appLoading" :class="isDashboard ? 'app-container' : ''">
+    <div v-if="!appLoading" class="app-layout">
       <!-- Sidebar (Persistent in Dashboard & Transactions) -->
       <Sidebar v-if="isDashboard" />
 
       <!-- Page Content -->
       <div
-        class="app-content"
-        :class="{ 'collapsed': isCollapsed, 'mobile-view': isMobile }"
+        :class="{
+          'app-content': isDashboard,
+          collapsed: isDashboard && isCollapsed,
+          'mobile-view': isMobile,
+        }"
+        style="overflow-y: auto"
       >
         <router-view />
       </div>
@@ -38,6 +42,7 @@ const appStore = useAppStore();
 const { appLoading, isCollapsed, currentGroup } = storeToRefs(appStore);
 const router = useRouter();
 const isMobile = ref(window.innerWidth <= 768);
+const scaleFactor = ref(1); // Controls dynamic scaling
 
 const isDashboard = computed(() =>
   ["/dashboard", "/transactions"].includes(router.currentRoute.value.path)
@@ -47,9 +52,12 @@ const showAuthModal = computed(() => {
   return ["/login", "/signup"].includes(router.currentRoute.value.path);
 });
 
-// Update isMobile state on resize
+// Update isMobile state on resize & scale elements accordingly
 const handleResize = () => {
   isMobile.value = window.innerWidth <= 768;
+  scaleFactor.value = Math.max(0.75, window.innerWidth / 1440); // Scale UI down on smaller screens
+  document.documentElement.style.setProperty("--scale-factor", scaleFactor.value);
+  
   if (isMobile.value) {
     appStore.setCollapsed(true);
   }
@@ -61,15 +69,28 @@ onMounted(() => {
 });
 
 watch(isCollapsed, (newVal) => {
-  document.documentElement.style.setProperty("--sidebar-width", newVal ? "80px" : "240px");
+  document.documentElement.style.setProperty(
+    "--sidebar-width",
+    `${newVal ? 80 : 240 * scaleFactor.value}px`
+  );
 });
 </script>
 
 <style>
+/* Scale UI elements based on screen width */
+:root {
+  --scale-factor: 1;
+}
+
 /* Global styles */
 body {
   background: linear-gradient(135deg, #0f172a, #1e293b);
   color: #eab308;
+  margin: 0;
+  height: 100vh;
+  overflow: hidden; /* Prevents scrolling */
+  display: flex;
+  flex-direction: column;
 }
 
 body::before {
@@ -96,10 +117,9 @@ body::before {
 .btn-primary {
   background: #eab308;
   color: black;
-  padding: 12px;
-  border-radius: 8px;
-  font-weight: bold;
-  font-size: 16px;
+  padding: calc(12px * var(--scale-factor));
+  border-radius: calc(8px * var(--scale-factor));
+  font-size: calc(16px * var(--scale-factor));
   transition: background 0.2s ease-in-out;
   display: flex;
   align-items: center;
@@ -116,10 +136,10 @@ body::before {
 .btn-secondary {
   background: rgba(255, 255, 255, 0.1);
   color: #eab308;
-  padding: 12px;
-  border-radius: 8px;
+  padding: calc(12px * var(--scale-factor));
+  border-radius: calc(8px * var(--scale-factor));
+  font-size: calc(16px * var(--scale-factor));
   font-weight: bold;
-  font-size: 16px;
   transition: background 0.2s ease-in-out;
 }
 .btn-secondary:hover {
@@ -133,10 +153,10 @@ body::before {
 .btn-danger {
   background: #dc2626;
   color: white;
-  padding: 12px;
-  border-radius: 8px;
+  padding: calc(12px * var(--scale-factor));
+  border-radius: calc(8px * var(--scale-factor));
+  font-size: calc(16px * var(--scale-factor));
   font-weight: bold;
-  font-size: 16px;
   transition: background 0.2s ease-in-out;
 }
 .btn-danger:hover {
@@ -149,8 +169,8 @@ body::before {
 
 /* Spinner */
 .spinner {
-  width: 24px;
-  height: 24px;
+  width: calc(24px * var(--scale-factor));
+  height: calc(24px * var(--scale-factor));
   border: 3px solid white;
   border-top: 3px solid transparent;
   border-radius: 50%;
@@ -169,13 +189,24 @@ body::before {
 /* App Layout */
 .app-container {
   display: flex;
-  min-height: 100vh;
-  background-color: #111827;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
 }
 
+/* Main Layout */
+.app-layout {
+  display: block;
+  flex: 1;
+  height: 100vh;
+  overflow: auto;
+}
+
+/* Sidebar will stay fixed, content scrolls */
 .app-content {
   flex-grow: 1;
-  padding: 16px;
+  height: 100vh;
+  padding: calc(16px * var(--scale-factor));
   transition: margin-left 0.3s ease-in-out;
   margin-left: var(--sidebar-width, 240px);
 }
@@ -190,13 +221,44 @@ body::before {
   margin-left: 0;
 }
 
-/* Responsive Sidebar */
+/* Prevent overflow issues */
+.app-layout::-webkit-scrollbar {
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  width: calc(6px * var(--scale-factor));
+}
+.app-layout::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+.app-content::-webkit-scrollbar {
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  width: calc(6px * var(--scale-factor));
+}
+.app-content::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+/* Responsive Scaling */
+@media (max-width: 1024px) {
+  :root { --scale-factor: 0.9; }
+}
+
 @media (max-width: 768px) {
+  :root { --scale-factor: 0.75; }
+  .app-content { padding: 10px; }
   .app-content {
-    margin-left: 28px !important;
+    margin-left: 0 !important;
     padding: 12px;
   }
 }
+
+@media (max-width: 480px) {
+  :root { --scale-factor: 0.65; }
+  .app-content { padding: 8px; }
+}
+
 /* Overlay Animation */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
