@@ -27,8 +27,8 @@ jobs:
             export CI=true
             sudo -u www-data -- sh -c '
               cd /var/www/money-manager-web-frontend &&
-              git stash &&
-              git pull origin main &&
+              git reset --hard origin/main
+              git pull origin main
               npm install --no-fund &&
               npm run build -- --logLevel error --no-progress > build.log 2>&1 || true
             '
