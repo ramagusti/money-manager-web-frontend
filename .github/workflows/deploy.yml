@@ -29,8 +29,8 @@ jobs:
               cd /var/www/money-manager-web-frontend &&
               git reset --hard origin/main
               git pull origin main
-              npm install --no-fund &&
-              npm run build -- --logLevel error --no-progress > build.log 2>&1 || true
+              npm install --no-audit --no-fund
+              npm run build || true
             '
             sudo systemctl restart nginx
           EOF
