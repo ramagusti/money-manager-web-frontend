@@ -753,7 +753,7 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: calc(20px * var(--scale-factor, 1));
-  font-size: calc(28px * var(--scale-factor, 1));
+  font-size: calc(24px * var(--scale-factor, 1));
 }
 .summary-cards {
   display: flex;
@@ -788,7 +788,6 @@ onMounted(async () => {
 }
 
 .summary-item .value {
-  font-size: 20px;
   margin-top: 5px;
   display: block;
 }
@@ -809,11 +808,13 @@ onMounted(async () => {
   margin-right: 10px;
   background: rgba(255, 255, 255, 0.1);
   color: white;
+  font-size: calc(14px * var(--scale-factor, 1));
 }
 .transactions-list table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 20px;
+  font-size: calc(12px * var(--scale-factor, 1));
 }
 .transactions-list th,
 .transactions-list td {

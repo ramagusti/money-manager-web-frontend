@@ -57,7 +57,7 @@ watchEffect(() => {
 
 /* Title */
 .hero-title {
-  font-size: 4rem;
+  font-size: calc(48px * var(--scale-factor));
   font-weight: bold;
   margin-bottom: 12px;
 }
@@ -69,7 +69,7 @@ watchEffect(() => {
 
 /* Description */
 .hero-description {
-  font-size: 1.2rem;
+  font-size: calc(20px * var(--scale-factor));
   max-width: 600px;
   margin: 0 auto;
 }

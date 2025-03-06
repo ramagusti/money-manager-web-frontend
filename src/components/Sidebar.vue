@@ -120,7 +120,7 @@ const logout = () => {
 <style scoped>
 /* Sidebar */
 .sidebar {
-  width: 260px;
+  width: calc(260px * var(--scale-factor, 1));
   height: 100%;
   position: fixed;
   display: flex;
@@ -129,7 +129,7 @@ const logout = () => {
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(12px);
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
-  padding: 24px;
+  padding: calc(24px * var(--scale-factor, 1));
   transition: width 0.3s ease-in-out;
 }
 
@@ -163,7 +163,7 @@ const logout = () => {
 
   .logout-container {
     width: 80%;
-    margin: 0 auto;
+    /* margin: 0 auto; */
   }
 }
 
@@ -175,12 +175,12 @@ const logout = () => {
   padding: 6px;
   border-radius: 6px;
   outline: none;
-  font-size: 14px;
+  font-size: calc(14px * var(--scale-factor, 1));
 }
 
 /* App Title */
 .sidebar-title {
-  font-size: 1.3rem;
+  font-size: calc(24px * var(--scale-factor, 1));
   font-weight: bold;
   margin-bottom: 24px;
   text-align: center;
@@ -198,6 +198,7 @@ const logout = () => {
   text-decoration: none;
   border-radius: 8px;
   transition: background 0.3s ease;
+  font-size: calc(14px * var(--scale-factor, 1));
 }
 
 .nav-link:hover,

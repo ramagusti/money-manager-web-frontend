@@ -54,6 +54,7 @@ export const useAppStore = defineStore('app', () => {
         isCollapsed,
         userGroups,
         currentGroup,
+        showCreateGroupModal,
         setLoading,
         setCollapsed,
         setUserGroups,

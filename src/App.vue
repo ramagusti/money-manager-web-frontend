@@ -119,7 +119,7 @@ body::before {
   color: black;
   padding: calc(12px * var(--scale-factor));
   border-radius: calc(8px * var(--scale-factor));
-  font-size: calc(16px * var(--scale-factor));
+  font-size: calc(14px * var(--scale-factor));
   transition: background 0.2s ease-in-out;
   display: flex;
   align-items: center;
@@ -138,7 +138,7 @@ body::before {
   color: #eab308;
   padding: calc(12px * var(--scale-factor));
   border-radius: calc(8px * var(--scale-factor));
-  font-size: calc(16px * var(--scale-factor));
+  font-size: calc(14px * var(--scale-factor));
   font-weight: bold;
   transition: background 0.2s ease-in-out;
 }
@@ -155,7 +155,7 @@ body::before {
   color: white;
   padding: calc(12px * var(--scale-factor));
   border-radius: calc(8px * var(--scale-factor));
-  font-size: calc(16px * var(--scale-factor));
+  font-size: calc(14px * var(--scale-factor));
   font-weight: bold;
   transition: background 0.2s ease-in-out;
 }
@@ -208,12 +208,12 @@ body::before {
   height: 100vh;
   padding: calc(16px * var(--scale-factor));
   transition: margin-left 0.3s ease-in-out;
-  margin-left: var(--sidebar-width, 240px);
+  margin-left: calc(180px * var(--scale-factor));
 }
 
 /* Collapsed Sidebar */
 .app-content.collapsed {
-  margin-left: 80px;
+  margin-left: calc(40px * var(--scale-factor));
 }
 
 /* Mobile View */
@@ -355,5 +355,20 @@ body::before {
   100% {
     transform: rotate(360deg);
   }
+}
+
+.input-field {
+  width: 100%;
+  padding: calc(12px * var(--scale-factor));
+  background: rgba(255, 255, 255, 0.915);
+  border: 1px solid #eab308;
+  border-radius: 8px;
+  color: rgb(70, 70, 70);
+  font-size: calc(14px * var(--scale-factor));
+  outline: none;
+  transition: border-color 0.2s ease-in-out;
+}
+.input-field:focus {
+  border-color: #facc15 !important;
 }
 </style>

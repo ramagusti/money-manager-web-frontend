@@ -274,12 +274,12 @@ const resetForm = () => {
 }
 .input-field {
   width: 100%;
-  padding: 12px;
+  padding: calc(12px * var(--scale-factor));
   background: rgba(255, 255, 255, 0.915);
   border: 1px solid #eab308;
   border-radius: 8px;
   color: rgb(70, 70, 70);
-  font-size: 16px;
+  font-size: calc(14px * var(--scale-factor));
   outline: none;
 }
 .input-field:focus {

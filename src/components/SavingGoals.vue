@@ -2,7 +2,14 @@
   <div class="saving-goals-card">
     <!-- <h3>🐷 Saving Goals</h3> -->
 
-    <div class="piggy-container">
+    <div v-if="goal === 0" class="no-goal">
+      <p class="mb-2">The group does not have a goal yet.</p>
+      <button class="btn-primary m-auto mb-8" @click="$emit('openGoalModal')">
+        ➕ Set a Goal
+      </button>
+    </div>
+
+    <div v-else class="piggy-container">
       <svg
         viewBox="0 0 200 200"
         class="piggy-svg"
@@ -42,17 +49,29 @@
       </svg>
 
       <div class="savings-text">
-        <p><b>Target:</b> {{ Intl.NumberFormat().format(currentSavings) }} / {{ Intl.NumberFormat().format(targetSavings) }}</p>
-        <p>{{ Intl.NumberFormat().format(fillPercentage.toFixed(2))}}% of target</p>
+        <p>
+          <b>Target:</b> {{ formatNumber(currentSavings) }} /
+          {{ formatNumber(goal) }}
+        </p>
+        <p>{{ formatNumber(fillPercentage.toFixed(2)) }}% of target</p>
       </div>
+      
+      <button class="btn-primary m-auto mt-2" @click="$emit('openGoalModal')">
+        🔄️ Modify Goal
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, defineProps } from "vue";
+import { ref, computed, defineProps, defineEmits } from "vue";
+import api from "../services/api";
 
 const props = defineProps({
+  goal: {
+    type: Number,
+    required: false,
+  },
   income: {
     type: Number,
     required: true,
@@ -61,19 +80,45 @@ const props = defineProps({
     type: Number,
     required: true,
   },
+  groupId: {
+    type: Number,
+    required: true,
+  },
 });
+
+const emit = defineEmits(["openGoalModal"]);
+const showGoalModal = ref(false);
+const newGoal = ref("");
 
 // Calculate savings
 const currentSavings = computed(() => props.income - props.expenses);
-const targetSavings = computed(() => props.income * 0.3);
 const fillPercentage = computed(
-  () => (currentSavings.value / targetSavings.value) * 100
+  () => (currentSavings.value / props.goal) * 100
 );
-
-// Calculate how much of the SVG should be filled
 const fillHeight = computed(() =>
   Math.max(0, Math.min(200, (fillPercentage.value / 100) * 200))
 );
+
+// Set new goal
+const setGoal = async () => {
+  if (!newGoal.value || newGoal.value <= 0) {
+    alert("Please enter a valid goal amount.");
+    return;
+  }
+
+  try {
+    await api.post(`/groups/${props.groupId}/goal`, {
+      goal_amount: newGoal.value,
+    });
+    emit("goalUpdated", newGoal.value);
+    showGoalModal.value = false;
+  } catch (error) {
+    console.error("Failed to set goal", error);
+  }
+};
+
+// Format numbers
+const formatNumber = (num) => Intl.NumberFormat().format(num);
 </script>
 
 <style scoped>
@@ -82,6 +127,10 @@ const fillHeight = computed(() =>
   /* padding: 20px; */
   border-radius: 12px;
   color: white;
+  text-align: center;
+}
+
+.no-goal {
   text-align: center;
 }
 

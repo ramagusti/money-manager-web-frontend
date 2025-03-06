@@ -26,8 +26,15 @@
       </div>
 
       <div v-else>
-        <SavingGoals class="mb-8" :income="income" :expenses="expenses" />
-        
+        <SavingGoals
+          class="mb-8"
+          :goal="goal"
+          :income="income"
+          :expenses="expenses"
+          :groupId="currentGroup?.id"
+          @openGoalModal="showGoalModal = true"
+        />
+
         <!-- Dashboard Widgets -->
         <div class="dashboard-widgets">
           <!-- <BalanceCard :balance="balance" /> -->
@@ -44,21 +51,62 @@
         <div
           v-if="showCreateGroupModal"
           class="modal-overlay"
-          @click.self="closeModal"
         >
           <div class="modal-content">
-            <h2>Create a New Group</h2>
-            <form @submit.prevent="createGroup">
-              <input
-                type="text"
-                v-model="groupName"
-                placeholder="Group Name"
-                class="input-field"
-                required
-              />
-              <button type="submit" class="btn-primary" :disabled="isLoading">
+            <h2 class="text-3xl font-semibold text-gold mb-6">
+              Create New Group
+            </h2>
+            <form class="space-y-4" @submit.prevent="createGroup">
+              <div class="input-group">
+                <input
+                  type="text"
+                  v-model="groupName"
+                  placeholder="Group Name"
+                  class="input-field"
+                  required
+                />
+              </div>
+              <button
+                @click="createGroup"
+                class="btn-primary m-auto"
+                :disabled="isLoading"
+              >
                 <span v-if="isLoading" class="spinner"></span>
-                <span v-else>Create</span>
+                <span v-else>Create Group</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Create Goal Modal -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div
+          v-if="showGoalModal"
+          class="modal-overlay"
+        >
+          <div class="modal-content">
+            <h2 class="text-3xl font-semibold text-gold mb-6">
+              Set Savings Goal
+            </h2>
+            <form class="space-y-4" @submit.prevent="setGoal">
+              <div class="input-group">
+                <input
+                  type="text"
+                  v-model="formattedNewGoal"
+                  placeholder="Enter goal amount"
+                  class="input-field"
+                />
+              </div>
+              <button
+                type="submit"
+                class="btn-primary m-auto"
+                :disabled="isLoading"
+              >
+                <span v-if="isLoading" class="spinner"></span>
+                <span v-else>Set Goal</span>
               </button>
             </form>
           </div>
@@ -69,7 +117,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from "vue";
+import { ref, onMounted, nextTick, watch } from "vue";
 import { useAppStore } from "../stores/app";
 import { storeToRefs } from "pinia";
 import Sidebar from "../components/Sidebar.vue";
@@ -90,24 +138,83 @@ const balance = ref(0);
 const transactions = ref([]);
 const income = ref(0);
 const expenses = ref(0);
-const savingGoals = ref([]);
+const goal = ref(0);
+const newGoal = ref("");
+const formattedNewGoal = ref("");
+const showGoalModal = ref(false);
+
+watch(
+  () => formattedNewGoal.value,
+  async (newVal) => {
+    if (!newVal) return;
+
+    formattedNewGoal.value = formatAmount(
+      Number(newVal.toString().replace(/[^\d.-]/g, ""))
+    );
+
+    newGoal.value = formattedNewGoal.value.replace(
+      /[^0-9.]/g,
+      ""
+    );
+  }
+);
+
+const formatAmount = (amount) => {
+  return Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+    useGrouping: true,
+  }).format(amount);
+};
+
+const setGoal = async () => {
+  if (!newGoal.value || newGoal.value <= 0) {
+    alert("Please enter a valid goal amount.");
+    return;
+  }
+
+  isLoading.value = true;
+  try {
+    await api.post(`/groups/${currentGroup.value?.id}/goal`, {
+      goal_amount: newGoal.value,
+    });
+    showGoalModal.value = false;
+  } catch (error) {
+    console.error("Failed to set goal", error);
+  } finally {
+    fetchDashboardData();
+    isLoading.value = false;
+    formattedNewGoal.value = "";
+  }
+};
+
+watch(showCreateGroupModal, (newVal) => {
+  if (!newVal) {
+    groupName.value = "";
+  }
+});
 
 const fetchDashboardData = async () => {
-  try {
-    const [balanceResponse, transactionsResponse, goalsResponse] =
-      await Promise.all([
-        // api.get("/balance"),
-        [],
-        api.get(`/transactions?limit=5&group_id=${currentGroup.value?.id}`),
-        // api.get("/saving-goals"),
-        [],
-      ]);
+  isLoadingData.value = true;
 
-    // balance.value = balanceResponse.data.balance;
+  try {
+    const [
+      balanceResponse,
+      transactionsResponse,
+      incomeExpenseResponse,
+      goalResponse,
+    ] = await Promise.all([
+      api.get("/groups/" + currentGroup.value?.id + "/balance"),
+      api.get(`/transactions?group_id=${currentGroup.value?.id}`),
+      api.get("/groups/" + currentGroup.value?.id + "/incomeexpense"),
+      api.get("/groups/" + currentGroup.value?.id + "/goal"),
+    ]);
+
+    balance.value = balanceResponse.data.balance;
     transactions.value = transactionsResponse.data.transactions.data;
-    income.value = Number(transactionsResponse.data.total_income);
-    expenses.value = Number(transactionsResponse.data.total_expense);
-    // savingGoals.value = goalsResponse.data.goals;
+    income.value = Number(incomeExpenseResponse.data.income);
+    expenses.value = Number(incomeExpenseResponse.data.expense);
+    goal.value = Number(goalResponse.data);
   } catch (error) {
     console.error("Error fetching dashboard data:", error);
   } finally {
@@ -154,6 +261,12 @@ const createGroup = async () => {
 const closeModal = () => {
   appStore.setShowCreateGroupModal(false);
 };
+
+watch(currentGroup, (newVal) => {
+  if (newVal) {
+    fetchDashboardData();
+  }
+});
 </script>
 
 <style scoped>
@@ -169,7 +282,7 @@ const closeModal = () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: calc(20px * var(--scale-factor, 1));
-  font-size: calc(28px * var(--scale-factor, 1));
+  font-size: calc(24px * var(--scale-factor, 1));
 }
 
 .dashboard-content {
@@ -183,99 +296,6 @@ const closeModal = () => {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
   font-size: calc(14px * var(--scale-factor, 1));
-}
-
-/* Overlay Animation */
-.modal-fade-enter-active,
-.modal-fade-leave-active {
-  transition: opacity 0.3s ease-in-out;
-}
-.modal-fade-enter-from,
-.modal-fade-leave-to {
-  opacity: 0;
-}
-
-/* Modal Scale Animation */
-.modal-scale-enter-active,
-.modal-scale-leave-active {
-  transition: transform 0.3s ease-in-out;
-}
-.modal-scale-enter-from,
-.modal-scale-leave-to {
-  transform: scale(0.8);
-}
-
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-.modal-content {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  border-radius: 15px;
-  padding: 30px;
-  box-shadow: 0 8px 24px rgba(255, 215, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  width: 380px;
-  text-align: center;
-  overflow: hidden;
-  transition: height 0.3s ease-in-out;
-}
-
-/* Input Field */
-.input-field {
-  width: 100%;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.915);
-  border: 1px solid #eab308;
-  border-radius: 8px;
-  color: rgb(70, 70, 70);
-  font-size: 16px;
-  outline: none;
-  transition: border-color 0.2s ease-in-out;
-}
-
-.input-field:focus {
-  border-color: #facc15 !important;
-}
-
-/* Buttons */
-.btn-primary {
-  background: #eab308;
-  color: black;
-  padding: 12px;
-  border-radius: 8px;
-  font-weight: bold;
-  font-size: 16px;
-  transition: background 0.2s ease-in-out;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-primary:hover {
-  background: #facc15;
-}
-
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  padding: 12px;
-  border-radius: 8px;
-  font-weight: bold;
-  font-size: 16px;
-  transition: background 0.2s ease-in-out;
-}
-
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.2);
 }
 
 /* Spinner */
@@ -302,7 +322,7 @@ const closeModal = () => {
   .dashboard-widgets {
     grid-template-columns: 1fr;
   }
-  
+
   .dashboard-header {
     flex-direction: column;
     align-items: flex-start;
