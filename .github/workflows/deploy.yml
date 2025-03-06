@@ -24,12 +24,12 @@ jobs:
           echo "$SSH_PRIVATE_KEY" | tr -d '\r' > private_key.pem
           chmod 600 private_key.pem
           ssh -tt -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -i private_key.pem $EC2_USER@$EC2_HOST << 'EOF'
-            cd /var/www/money-manager-web-frontend &&
-            sudo git stash &&
-            sudo git pull origin main &&
-            sudo npm install &&
-            sudo npm run build &&
-            sudo systemctl restart nginx &&
-            sudo systemctl restart php8.2-fpm
+            sudo -u www-data -- sh -c '
+              cd /var/www/money-manager-web-frontend &&
+              git stash &&
+              git pull origin main &&
+              npm install &&
+              npm run build
+            '
+            sudo systemctl restart nginx
           EOF
-
