@@ -154,6 +154,7 @@ const handleLogin = async () => {
     await authStore.login(email.value, password.value);
     router.push("/dashboard");
   } catch (error) {
+    console.log(error);
     const validationErrors = error.response.data.errors;
     errors.value.email = validationErrors?.email?.[0] || "";
     errors.value.password = validationErrors?.password?.[0] || "";

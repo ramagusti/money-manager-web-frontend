@@ -30,7 +30,8 @@ export const useAuthStore = defineStore("auth", () => {
             localStorage.setItem("token", token.value);
             await fetchUser();
         } catch (error) {
-            throw error.response?.data?.message || "Login failed";
+            console.log(error);
+            throw error || "Login failed";
         } finally {
             isLoading.value = false;
         }
