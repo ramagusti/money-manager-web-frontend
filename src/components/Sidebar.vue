@@ -11,10 +11,10 @@
       <!-- Group Selection -->
       <div v-if="!isCollapsed">
         <select
-          v-if="userGroups?.length > 0"
           v-model="selectedGroup"
           @change="updateGroup"
           class="group-select"
+          placeholder="Choose a group"
         >
           <option
             v-for="group in userGroups"
@@ -28,7 +28,6 @@
             Create New Group
           </option>
         </select>
-        <span v-else class="text-white">No Group</span>
       </div>
     </div>
 
@@ -51,13 +50,13 @@
       <router-link to="/dashboard" class="nav-link" active-class="active">
         🏠 <span v-if="!isCollapsed">Dashboard</span>
       </router-link>
-      <router-link to="/transactions" class="nav-link" active-class="active">
+      <router-link to="/transactions" class="nav-link" active-class="active" v-if="userGroups?.length > 0 && currentGroup">
         💳 <span v-if="!isCollapsed">Transactions</span>
       </router-link>
-      <!-- <router-link to="/reports" class="nav-link" active-class="active">
+      <!-- <router-link to="/reports" class="nav-link" active-class="active" v-if="userGroups?.length > 0 && currentGroup">
         📊 <span v-if="!isCollapsed">Reports</span>
       </router-link>
-      <router-link to="/settings" class="nav-link" active-class="active">
+      <router-link to="/settings" class="nav-link" active-class="active" v-if="userGroups?.length > 0 && currentGroup">
         ⚙️ <span v-if="!isCollapsed">Settings</span>
       </router-link> -->
     </nav>
@@ -88,11 +87,11 @@ const isMobile = ref(window.innerWidth <= 768);
 const { isCollapsed, userGroups, currentGroup } = storeToRefs(appStore);
 
 watch(currentGroup, async () => {
-  selectedGroup.value = currentGroup.value.id;
+  selectedGroup.value = currentGroup.value?.id;
 });
 
 onMounted(async () => {
-  selectedGroup.value = currentGroup.value.id;
+  selectedGroup.value = currentGroup.value?.id;
 });
 
 // Method to toggle sidebar collapse

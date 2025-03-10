@@ -53,8 +53,8 @@ const toggleMenu = () => {
   position: fixed;
   top: 0;
   width: 100%;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
   padding: 12px 20px;
   z-index: 1000;
 }

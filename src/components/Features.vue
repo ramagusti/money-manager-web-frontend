@@ -138,11 +138,13 @@ async function onEnter(el, done) {
   text-align: center;
   box-shadow: 0 8px 24px rgba(255, 215, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: transform 0.3s ease-in-out;
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  will-change: transform, box-shadow;
 }
 
 .feature-card:hover {
-  transform: scale(1.05);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(255, 215, 0, 0.3); /* Slightly stronger shadow */
 }
 
 /* Feature Icon */

@@ -18,8 +18,8 @@
         v-if="!userGroups || userGroups.length === 0"
         class="no-group-container"
       >
-        <h2>You don't have any groups yet.</h2>
-        <p>Create a group to start managing transactions.</p>
+        <p class="no-group-title mb-2">You don't have any groups yet.</p>
+        <p class="no-group-description mb-4">Create a group to start managing transactions.</p>
         <button @click="showCreateGroupModal = true" class="btn-primary">
           ➕ Create Group
         </button>
@@ -51,6 +51,7 @@
         <div
           v-if="showCreateGroupModal"
           class="modal-overlay"
+          @click.self="closeGroupModal"
         >
           <div class="modal-content">
             <h2 class="text-3xl font-semibold text-gold mb-6">
@@ -86,6 +87,7 @@
         <div
           v-if="showGoalModal"
           class="modal-overlay"
+          @click.self="closeGoalModal"
         >
           <div class="modal-content">
             <h2 class="text-3xl font-semibold text-gold mb-6">
@@ -257,9 +259,12 @@ const createGroup = async () => {
   }
 };
 
-// Close modal
-const closeModal = () => {
+const closeGroupModal = () => {
   appStore.setShowCreateGroupModal(false);
+};
+
+const closeGoalModal = () => {
+  showGoalModal.value = false;
 };
 
 watch(currentGroup, (newVal) => {
@@ -296,6 +301,38 @@ watch(currentGroup, (newVal) => {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
   font-size: calc(14px * var(--scale-factor, 1));
+}
+
+.no-group-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  height: 60vh; /* Adjust height to make sure it is centered */
+}
+
+.no-group-title {
+  font-size: calc(28px * var(--scale-factor, 1));
+  font-weight: bold;
+  color: #eab308;
+}
+
+.no-group-description {
+  font-size: calc(20px * var(--scale-factor, 1));
+  color: #d1d5db;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Spinner */
