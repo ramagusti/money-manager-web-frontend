@@ -5,5 +5,8 @@ export default defineConfig({
   plugins: [vue()],
   define: {
     'process.env': {}
-  }
+  },
+  optimizeDeps: {
+    exclude: ["@vue/devtools-api"],
+  },
 });
