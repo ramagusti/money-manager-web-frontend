@@ -135,7 +135,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, nextTick } from "vue";
+import { ref, defineProps, nextTick, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import api from "../services/api";
 
@@ -151,15 +151,22 @@ const modalBox = ref(null);
 const errors = ref({ name: "", email: "", password: "", general: "" });
 const inviteToken = ref(router.currentRoute.value.query.token);
 
+const recaptchaSiteKey = ref(import.meta.env.VITE_RECAPTCHA_SITE_KEY);
+
 const register = async () => {
   isLoading.value = true;
 
   try {
+    const recaptchaToken = await grecaptcha.execute(recaptchaSiteKey.value, {
+      action: "register",
+    });
+
     await api.post("/register", {
       name: name.value,
       email: email.value,
       password: password.value,
       invite_token: inviteToken.value,
+      recaptcha_token: recaptchaToken,
     });
 
     isSubmitted.value = true; // Show the confirmation message
@@ -190,7 +197,7 @@ const register = async () => {
 };
 
 const close = () => {
-  router.push('/'); // Ensure route clears when closing
+  router.push("/"); // Ensure route clears when closing
 };
 
 const clearError = (field) => {
@@ -215,6 +222,16 @@ const resetForm = () => {
   email.value = "";
   password.value = "";
 };
+
+onMounted(() => {
+  if (!window.grecaptcha) {
+    const script = document.createElement("script");
+    script.src = `https://www.google.com/recaptcha/api.js?render=${recaptchaSiteKey.value}`;
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+  }
+});
 </script>
 
 <style scoped>
