@@ -55,10 +55,10 @@
       </router-link>
       <!-- <router-link to="/reports" class="nav-link" active-class="active" v-if="userGroups?.length > 0 && currentGroup">
         📊 <span v-if="!isCollapsed">Reports</span>
-      </router-link>
+      </router-link> -->
       <router-link to="/settings" class="nav-link" active-class="active" v-if="userGroups?.length > 0 && currentGroup">
         ⚙️ <span v-if="!isCollapsed">Settings</span>
-      </router-link> -->
+      </router-link>
     </nav>
 
     <!-- Logout Button -->

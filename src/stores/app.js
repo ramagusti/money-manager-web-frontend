@@ -1,13 +1,19 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import api from '../services/api';
+import { useAuthStore } from './auth';
 
 export const useAppStore = defineStore('app', () => {
+    const authStore = useAuthStore();
+
     const isCollapsed = ref(false);
-    const userGroups = ref([]);
-    const currentGroup = ref(null);
     const showCreateGroupModal = ref(false);
     const appLoading = ref(true);
+    const userGroups = ref([]);
+    const currentGroup = ref(null);
+    const userRole = ref(null);
+    const isOwner = ref(false);
+    const isAdmin = ref(false);
 
     const setLoading = (loading) => {
         appLoading.value = loading;
@@ -21,8 +27,9 @@ export const useAppStore = defineStore('app', () => {
         userGroups.value = groups;
     };
 
-    const setCurrentGroup = (group) => {
+    const setCurrentGroup = async (group) => {
         currentGroup.value = group;
+        await fetchUserRole();
     };
 
     const setShowCreateGroupModal = (show) => {
@@ -36,7 +43,7 @@ export const useAppStore = defineStore('app', () => {
 
             // Set the first group as the default if none is selected
             if (!currentGroup.value && userGroups.value.length > 0) {
-                currentGroup.value = userGroups.value[0];
+                await setCurrentGroup(userGroups.value[0]);
             }
         } catch (error) {
             console.error("Error fetching groups:", error);
@@ -49,12 +56,34 @@ export const useAppStore = defineStore('app', () => {
         }
     };
 
+    const fetchUserRole = async () => {
+        if (!currentGroup.value) return;
+
+        try {
+            while (!authStore.user) {
+                console.warn("User is not available yet, waiting...");
+                await new Promise(resolve => setTimeout(resolve, 100)); // Wait 100ms before retrying
+            }
+            const response = await api.get(`/groups/${currentGroup.value.id}/members`);
+            const member = response.data.data.find(m => m.id === authStore.user.id);
+            userRole.value = member ? member.role : null;
+            
+            isOwner.value = userRole.value === 'owner';
+            isAdmin.value = ['owner', 'admin'].includes(userRole.value);
+        } catch (error) {
+            console.error("Error fetching user role:", error);
+        }
+    };
+
     return {
         appLoading,
         isCollapsed,
+        showCreateGroupModal,
         userGroups,
         currentGroup,
-        showCreateGroupModal,
+        userRole,
+        isOwner,
+        isAdmin,
         setLoading,
         setCollapsed,
         setUserGroups,
@@ -62,6 +91,7 @@ export const useAppStore = defineStore('app', () => {
         fetchGroups,
         setGroup,
         setShowCreateGroupModal,
+        fetchUserRole,
     };
 });
 

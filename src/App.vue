@@ -45,7 +45,7 @@ const isMobile = ref(window.innerWidth <= 768);
 const scaleFactor = ref(1); // Controls dynamic scaling
 
 const isDashboard = computed(() =>
-  ["/dashboard", "/transactions"].includes(router.currentRoute.value.path)
+  ["/dashboard", "/transactions", "/settings"].includes(router.currentRoute.value.path)
 );
 
 const showAuthModal = computed(() => {

@@ -139,6 +139,9 @@ import { ref, defineProps, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import api from "../services/api";
 
+const props = defineProps({ isOpen: Boolean });
+const router = useRouter();
+
 const name = ref("");
 const email = ref("");
 const password = ref("");
@@ -146,9 +149,7 @@ const isSubmitted = ref(false);
 const isLoading = ref(false);
 const modalBox = ref(null);
 const errors = ref({ name: "", email: "", password: "", general: "" });
-
-const props = defineProps({ isOpen: Boolean });
-const router = useRouter();
+const inviteToken = ref(router.currentRoute.value.query.token);
 
 const register = async () => {
   isLoading.value = true;
@@ -158,6 +159,7 @@ const register = async () => {
       name: name.value,
       email: email.value,
       password: password.value,
+      invite_token: inviteToken.value,
     });
 
     isSubmitted.value = true; // Show the confirmation message

@@ -4,6 +4,7 @@ import { useAppStore } from "../stores/app";
 import Home from "../views/Home.vue";
 import Dashboard from "../views/Dashboard.vue";
 import Transactions from "../views/Transactions.vue";
+import GroupSettings from "../views/GroupSettings.vue";
 import VerifiedSuccess from "../views/VerifiedSuccess.vue";
 import NotFound from "../views/NotFound.vue";
 
@@ -11,6 +12,16 @@ const routes = [
   {
     path: "/",
     name: "Home",
+    component: Home,
+  },
+  {
+    path: "/login",
+    name: "Login",
+    component: Home,
+  },
+  {
+    path: "/signup",
+    name: "Signup",
     component: Home,
   },
   {
@@ -30,14 +41,10 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: "/login",
-    name: "Login",
-    component: Home,
-  },
-  {
-    path: "/signup",
-    name: "Signup",
-    component: Home,
+    path: "/settings",
+    name: "Settings",
+    component: GroupSettings,
+    meta: { requiresAuth: true }
   },
   {
     path: "/:pathMatch(.*)*",

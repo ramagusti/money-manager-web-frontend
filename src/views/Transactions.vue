@@ -986,6 +986,7 @@ onMounted(async () => {
   padding: calc(10px * var(--scale-factor, 1));
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
+
 /* Mobile Adjustments */
 @media (max-width: 768px) {
   :root {
