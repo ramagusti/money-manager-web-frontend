@@ -49,7 +49,7 @@
             <td>{{ member.name }}</td>
             <td>{{ member.email }}</td>
             <td>
-              <span v-if="member.role === 'owner'">👑 Owner</span>
+              <span v-if="member.role === 'owner'">👑 Owner {{ appStore.isOwner ? "(You)" : "" }}</span>
               <select
                 v-else
                 v-model="member.role"
@@ -57,8 +57,14 @@
                 :disabled="!appStore.isOwner"
                 class="role-dropdown"
               >
-                <option value="admin">Admin</option>
-                <option value="member">Member</option>
+                <option
+                  v-for="role in [{name: 'Admin', value: 'admin'}, {name: 'Member', value: 'member'}]"
+                  :value="role.value"
+                  :key="role.value"
+                  class="text-black"
+                >
+                  {{ role.name }}
+                </option>
               </select>
             </td>
             <td v-if="appStore.isAdmin">
@@ -346,6 +352,16 @@ onMounted(fetchMembers);
   border-radius: 8px;
   font-size: 16px;
   outline: none;
+}
+
+.role-dropdown {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 6px;
+  border-radius: 6px;
+  outline: none;
+  font-size: calc(14px * var(--scale-factor, 1));
 }
 
 /* Mobile Adjustments */

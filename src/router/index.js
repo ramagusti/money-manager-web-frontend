@@ -6,6 +6,7 @@ import Dashboard from "../views/Dashboard.vue";
 import Transactions from "../views/Transactions.vue";
 import GroupSettings from "../views/GroupSettings.vue";
 import VerifiedSuccess from "../views/VerifiedSuccess.vue";
+import JoinGroup from "../views/JoinGroup.vue";
 import NotFound from "../views/NotFound.vue";
 
 const routes = [
@@ -44,6 +45,11 @@ const routes = [
     path: "/settings",
     name: "Settings",
     component: GroupSettings,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: "/join-group",
+    component: JoinGroup,
     meta: { requiresAuth: true }
   },
   {

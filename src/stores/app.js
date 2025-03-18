@@ -68,7 +68,7 @@ export const useAppStore = defineStore('app', () => {
             const member = response.data.data.find(m => m.id === authStore.user.id);
             userRole.value = member ? member.role : null;
             
-            isOwner.value = userRole.value === 'owner';
+            isOwner.value = userRole.value == 'owner';
             isAdmin.value = ['owner', 'admin'].includes(userRole.value);
         } catch (error) {
             console.error("Error fetching user role:", error);
