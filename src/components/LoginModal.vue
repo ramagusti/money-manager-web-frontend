@@ -80,28 +80,40 @@
                       <span v-else>Login</span>
                     </button>
                   </form>
+                  <p class="text-gray-400 under-text mt-4">
+                    Forgot your password?
+                    <span
+                      class="text-gold cursor-pointer hover:underline"
+                      @click="router.push('/forgot-password')"
+                    >
+                      Reset here
+                    </span>
+                  </p>
                   <Transition name="fade">
-                    <div v-if="errors.email" class="text-sm mt-2">
+                    <div v-if="errors.email" class="under-text mt-2">
                       <p class="text-red-400">
                         {{ errors.email }}
                       </p>
                     </div>
                   </Transition>
                   <Transition name="fade">
-                    <div v-if="errors.password" class="text-sm mt-2">
+                    <div v-if="errors.password" class="under-text mt-2">
                       <p class="text-red-400">
                         {{ errors.password }}
                       </p>
                     </div>
                   </Transition>
                   <Transition name="fade">
-                    <div v-if="errors.general" class="text-sm mt-2">
+                    <div v-if="errors.general" class="under-text mt-2">
                       <p class="text-red-400">
                         {{ errors.general }}
                       </p>
 
                       <!-- Show the resend verification link only if the email is not resent -->
-                      <p v-if="errors.general.includes('verify your email')" class="text-gray-400 mt-2">
+                      <p
+                        v-if="errors.general.includes('verify your email')"
+                        class="text-gray-400 mt-2"
+                      >
                         Didn't receive an email?
                         <span
                           @click="resendVerification"
@@ -112,7 +124,7 @@
                       </p>
                     </div>
                   </Transition>
-                  <p class="mt-4 text-gray-400 text-sm">
+                  <p class="mt-4 text-gray-400 under-text">
                     Don't have an account?
                     <span
                       @click="router.push('/signup')"
@@ -149,7 +161,7 @@ const router = useRouter();
 const handleLogin = async () => {
   isLoading.value = true;
   errors.value = { email: "", password: "", general: "" };
-  
+
   try {
     await authStore.login(email.value, password.value);
     router.push("/dashboard");
@@ -179,7 +191,8 @@ const resendVerification = async () => {
     await api.post("/email/resend", { email: email.value });
 
     // Change the message to inform the user that the email has been resent
-    errors.value.general = "A new verification email has been sent. Please check your inbox.";
+    errors.value.general =
+      "A new verification email has been sent. Please check your inbox.";
   } catch (error) {
     errors.value.general = "Failed to resend email. Please try again.";
   }
@@ -190,7 +203,7 @@ const clearError = (field) => {
 };
 
 const close = () => {
-  router.push('/'); // Ensure route clears when closing
+  router.push("/"); // Ensure route clears when closing
 };
 
 const adjustHeight = async () => {
@@ -224,5 +237,8 @@ const resetHeight = () => {
 }
 .border-red-500 {
   border-color: red !important;
+}
+.under-text {
+  font-size: calc(14px * var(--scale-factor));
 }
 </style>

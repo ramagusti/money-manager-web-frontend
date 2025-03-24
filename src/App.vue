@@ -3,6 +3,8 @@
     <!-- Authentication Modals -->
     <LoginModal :isOpen="showAuthModal && $route.path === '/login'" />
     <SignupModal :isOpen="showAuthModal && $route.path === '/signup'" />
+    <ForgotPasswordModal :isOpen="showAuthModal && $route.path === '/forgot-password'" />
+    <ResetPasswordModal :isOpen="showAuthModal && $route.path === '/reset-password'" />
 
     <!-- Main Layout -->
     <div v-if="!appLoading" class="app-layout">
@@ -37,6 +39,8 @@ import { storeToRefs } from "pinia";
 import Sidebar from "./components/Sidebar.vue";
 import LoginModal from "./components/LoginModal.vue";
 import SignupModal from "./components/SignupModal.vue";
+import ForgotPasswordModal from "./components/ForgotPasswordModal.vue";
+import ResetPasswordModal from "./components/ResetPasswordModal.vue"; 
 
 const appStore = useAppStore();
 const { appLoading, isCollapsed, currentGroup } = storeToRefs(appStore);
@@ -49,7 +53,7 @@ const isDashboard = computed(() =>
 );
 
 const showAuthModal = computed(() => {
-  return ["/login", "/signup"].includes(router.currentRoute.value.path);
+  return ["/login", "/signup", "/forgot-password", "/reset-password"].includes(router.currentRoute.value.path);
 });
 
 // Update isMobile state on resize & scale elements accordingly

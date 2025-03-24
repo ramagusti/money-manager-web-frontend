@@ -40,7 +40,10 @@
                         required
                       />
                       <Transition name="fade">
-                        <p v-if="errors.name" class="text-red-400 text-sm mt-1">
+                        <p
+                          v-if="errors.name"
+                          class="text-red-400 under-text mt-1"
+                        >
                           {{ errors.name }}
                         </p>
                       </Transition>
@@ -58,7 +61,7 @@
                       <Transition name="fade">
                         <p
                           v-if="errors.email"
-                          class="text-red-400 text-sm mt-1"
+                          class="text-red-400 under-text mt-1"
                         >
                           {{ errors.email }}
                         </p>
@@ -77,7 +80,7 @@
                       <Transition name="fade">
                         <p
                           v-if="errors.password"
-                          class="text-red-400 text-sm mt-1"
+                          class="text-red-400 under-text mt-1"
                         >
                           {{ errors.password }}
                         </p>
@@ -95,7 +98,7 @@
                   </form>
 
                   <Transition name="fade">
-                    <div v-if="errors.general" class="text-sm mt-2">
+                    <div v-if="errors.general" class="under-text mt-2">
                       <p class="text-red-400">
                         {{ errors.general }}
                       </p>
@@ -116,7 +119,7 @@
                     </div>
                   </Transition>
 
-                  <p class="mt-4 text-gray-400 text-sm">
+                  <p class="mt-4 text-gray-400 under-text">
                     Already have an account?
                     <span
                       @click="router.push('/login')"
@@ -303,5 +306,8 @@ onMounted(() => {
 }
 .input-field:focus {
   border-color: #facc15;
+}
+.under-text {
+  font-size: calc(14px * var(--scale-factor));
 }
 </style>

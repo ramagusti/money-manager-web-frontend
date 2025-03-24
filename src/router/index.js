@@ -26,6 +26,16 @@ const routes = [
     component: Home,
   },
   {
+    path: "/forgot-password",
+    name: "Forgot Password",
+    component: Home,
+  },
+  {
+    path: "/reset-password",
+    name: "Reset Password",
+    component: Home,
+  },
+  {
     path: "/verified-success",
     component: VerifiedSuccess
   },
