@@ -39,21 +39,6 @@
           class="filter-input"
         />
         <select
-          v-model="selectedCategory"
-          @change="fetchTransactions"
-          class="filter-input"
-        >
-          <option value="" style="color: black">All Categories</option>
-          <option
-            v-for="category in categories"
-            :key="category.id"
-            :value="category.id"
-            style="color: black"
-          >
-            {{ category.name }}
-          </option>
-        </select>
-        <select
           v-model="selectedType"
           @change="fetchTransactions"
           class="filter-input"
@@ -61,6 +46,23 @@
           <option value="" style="color: black">All</option>
           <option value="income" style="color: black">Income</option>
           <option value="expense" style="color: black">Expense</option>
+        </select>
+        <select
+          v-model="selectedCategory"
+          @change="fetchTransactions"
+          class="filter-input"
+        >
+          <option value="" style="color: black">All Categories</option>
+          <option
+            v-for="category in categories.filter(
+              (category) => selectedType === '' || selectedType === null || category.type === selectedType
+            )"
+            :key="category.id"
+            :value="category.id"
+            style="color: black"
+          >
+            {{ selectedType === "" || selectedType === null ? category.name + " (" + category.type + ")" : category.name }}
+          </option>
         </select>
       </div>
 
@@ -187,7 +189,9 @@
                   class="input-field"
                 >
                   <option
-                    v-for="category in categories"
+                    v-for="category in categories.filter(
+                      (category) => category.type === formData.type
+                    )"
                     :key="category.id"
                     :value="category.id"
                   >
