@@ -50,10 +50,10 @@
 
       <div class="savings-text">
         <p>
-          <b>Target:</b> {{ formatNumber(currentSavings) }} /
-          {{ formatNumber(goal) }}
+          {{ formatCurrency(currentSavings) }} /
+          {{ formatCurrency(goal) }}
         </p>
-        <p>{{ formatNumber(fillPercentage.toFixed(2)) }}% of target</p>
+        <b>{{ formatNumber(fillPercentage.toFixed(2)) }}% of target</b>
       </div>
       
       <button class="btn-primary m-auto mt-2" @click="$emit('openGoalModal')">
@@ -98,6 +98,14 @@ const fillPercentage = computed(
 const fillHeight = computed(() =>
   Math.max(0, Math.min(200, (fillPercentage.value / 100) * 200))
 );
+
+// Currency formatter using Indonesian Rupiah formatting
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+  }).format(amount);
+};
 
 // Set new goal
 const setGoal = async () => {
