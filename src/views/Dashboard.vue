@@ -37,10 +37,10 @@
 
         <!-- Dashboard Widgets -->
         <div class="dashboard-widgets">
-          <RecentTransactions :transactions="transactions" />
+          <RecentTransactions :transactions="allTransactions" />
           <IncomeExpenseChart :income="income" :expenses="expenses" />
-          <Summary :transactions="transactions" />
-          <MonthlySummary :transactions="transactions" />
+          <Summary :transactions="allTransactions" />
+          <MonthlySummary :transactions="filteredTransactions" />
         </div>
       </div>
     </div>
@@ -139,7 +139,8 @@ const groupName = ref("");
 const isLoading = ref(false);
 const isLoadingData = ref(true);
 const balance = ref(0);
-const transactions = ref([]);
+const allTransactions = ref([]);
+const filteredTransactions = ref([]);
 const income = ref(0);
 const expenses = ref(0);
 const goal = ref(0);
@@ -215,7 +216,8 @@ const fetchDashboardData = async () => {
     ]);
 
     balance.value = balanceResponse.data.balance;
-    transactions.value = transactionsResponse.data.transactions;
+    allTransactions.value = transactionsResponse.data.all_transactions;
+    filteredTransactions.value = transactionsResponse.data.filtered_transactions;
     income.value = Number(incomeExpenseResponse.data.income);
     expenses.value = Number(incomeExpenseResponse.data.expense);
     goal.value = Number(goalResponse.data);
