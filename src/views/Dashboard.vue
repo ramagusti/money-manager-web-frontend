@@ -37,10 +37,10 @@
 
         <!-- Dashboard Widgets -->
         <div class="dashboard-widgets">
-          <!-- <BalanceCard :balance="balance" /> -->
           <RecentTransactions :transactions="transactions" />
           <IncomeExpenseChart :income="income" :expenses="expenses" />
-          <!-- <SavingGoals :income="income" :expenses="expenses" /> -->
+          <Summary :transactions="transactions" />
+          <MonthlySummary :transactions="transactions" />
         </div>
       </div>
     </div>
@@ -126,6 +126,8 @@ import Sidebar from "../components/Sidebar.vue";
 import BalanceCard from "../components/BalanceCard.vue";
 import RecentTransactions from "../components/RecentTransactions.vue";
 import IncomeExpenseChart from "../components/IncomeExpenseChart.vue";
+import Summary from "../components/Summary.vue";
+import MonthlySummary from "../components/MonthlySummary.vue";
 import SavingGoals from "../components/SavingGoals.vue";
 import api from "../services/api";
 
@@ -207,13 +209,13 @@ const fetchDashboardData = async () => {
       goalResponse,
     ] = await Promise.all([
       api.get("/groups/" + currentGroup.value?.id + "/balance"),
-      api.get(`/transactions?group_id=${currentGroup.value?.id}`),
+      api.get(`/dashboard-data?group_id=${currentGroup.value?.id}`),
       api.get("/groups/" + currentGroup.value?.id + "/incomeexpense"),
       api.get("/groups/" + currentGroup.value?.id + "/goal"),
     ]);
 
     balance.value = balanceResponse.data.balance;
-    transactions.value = transactionsResponse.data.transactions.data;
+    transactions.value = transactionsResponse.data.transactions;
     income.value = Number(incomeExpenseResponse.data.income);
     expenses.value = Number(incomeExpenseResponse.data.expense);
     goal.value = Number(goalResponse.data);

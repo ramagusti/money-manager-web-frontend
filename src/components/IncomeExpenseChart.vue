@@ -1,6 +1,6 @@
 <template>
   <div class="chart-card">
-    <h3>📊 Income vs Expenses</h3>
+    <h3><b>📊 Monthly Income vs Expenses</b></h3> 
     <canvas ref="chartCanvas"></canvas>
   </div>
 </template>

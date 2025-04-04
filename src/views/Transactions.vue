@@ -473,7 +473,7 @@ const fetchMembers = async () => {
 
     const response = await api.get(`/groups/${currentGroup.value.id}/members`);
 
-    members.value = response.data; // Store members in reactive state
+    members.value = response.data.data; // Store members in reactive state
   } catch (error) {
     console.error("Failed to fetch members", error);
   }
