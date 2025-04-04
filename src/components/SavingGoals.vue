@@ -35,7 +35,7 @@
           href="/images/PiggyBang.svg"
           width="200"
           height="200"
-          opacity="0.3"
+          opacity="0.2"
         />
 
         <!-- Filled Piggy (Masked) -->
