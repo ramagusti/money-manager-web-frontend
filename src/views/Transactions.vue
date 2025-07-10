@@ -55,13 +55,20 @@
           <option value="" style="color: black">All Categories</option>
           <option
             v-for="category in categories.filter(
-              (category) => selectedType === '' || selectedType === null || category.type === selectedType
+              (category) =>
+                selectedType === '' ||
+                selectedType === null ||
+                category.type === selectedType
             )"
             :key="category.id"
             :value="category.id"
             style="color: black"
           >
-            {{ selectedType === "" || selectedType === null ? category.name + " (" + category.type + ")" : category.name }}
+            {{
+              selectedType === "" || selectedType === null
+                ? category.name + " (" + category.type + ")"
+                : category.name
+            }}
           </option>
         </select>
       </div>
@@ -142,23 +149,38 @@
     <div class="pagination">
       <button v-if="page > 1" @click="prevPage">⬅ Previous</button>
 
-      <span v-for="link in transactionsMeta.links" :key="link.label">
+      <template v-for="(p, index) in paginationPages" :key="index">
         <button
-          v-if="
-            link.url &&
-            !link.label.toLowerCase().includes('previous') &&
-            !link.label.toLowerCase().includes('next')
-          "
-          :class="{ 'active-page': link.active }"
-          @click="changePage(link.url)"
+          v-if="typeof p === 'number'"
+          :class="{
+            'active-page': parseInt(transactionsMeta.current_page) === p,
+          }"
+          @click="goToPage(p)"
         >
-          {{ link.label }}
+          {{ p }}
         </button>
-      </span>
+
+        <button v-else @click="showPageInput = true" class="pagination-ellipsis">
+          ...
+        </button>
+      </template>
 
       <button v-if="transactionsMeta.next_page_url" @click="nextPage">
         Next ➡
       </button>
+    </div>
+    <div v-if="showPageInput" class="jump-page-modal">
+      <input
+        v-model="jumpPageInput"
+        type="number"
+        min="1"
+        :max="transactionsMeta.last_page"
+        class="input-field w-24"
+        placeholder="Page"
+        @keyup.enter="handleJumpPage"
+      />
+      <button @click="handleJumpPage" class="btn-primary ml-2">Go</button>
+      <button @click="showPageInput = false" class="ml-2">Cancel</button>
     </div>
 
     <!-- Transaction Modal -->
@@ -198,6 +220,12 @@
                     {{ category.name }}
                   </option>
                 </select>
+                <input
+                  type="text"
+                  v-model="formData.description"
+                  placeholder="Description (Optional)"
+                  class="input-field"
+                />
                 <!-- Amount Input with Calculator Button -->
                 <div class="input-group">
                   <input
@@ -217,12 +245,6 @@
                     </button>
                   </span>
                 </div>
-                <input
-                  type="text"
-                  v-model="formData.description"
-                  placeholder="Description (Optional)"
-                  class="input-field"
-                />
                 <!-- Actor selection with "Other" option -->
                 <select v-model="selectedActor" class="input-field">
                   <option value="" disabled>Select Actor</option>
@@ -289,37 +311,42 @@
                   ref="calculatorInput"
                   class="flex-1 overflow-hidden text-lg"
                   style="
-                    direction: rtl;
                     text-align: left;
                     border: none;
                     background: transparent;
                     outline: none;
                   "
-                  v-model="calculatorValue"
+                  :value="calculatorValue"
                   readonly
                 />
                 <div class="w-1/6">
                   <button @click="clearCalculator">C</button>
                 </div>
               </div>
+              <div class="calculator-buttons flex justify-start">
+                <div></div>
+                <div></div>
+                <div></div>
+                <button @click="deleteLastDigit">&larr;</button>
+              </div>
               <div class="calculator-buttons">
                 <button @click="appendToCalculator('7')">7</button>
                 <button @click="appendToCalculator('8')">8</button>
                 <button @click="appendToCalculator('9')">9</button>
-                <button @click="deleteLastDigit">&larr;</button>
+                <button @click="appendToCalculator('+')">+</button>
 
                 <button @click="appendToCalculator('4')">4</button>
                 <button @click="appendToCalculator('5')">5</button>
                 <button @click="appendToCalculator('6')">6</button>
-                <button @click="appendToCalculator('+')">+</button>
+                <button @click="appendToCalculator('-')">-</button>
 
                 <button @click="appendToCalculator('1')">1</button>
                 <button @click="appendToCalculator('2')">2</button>
                 <button @click="appendToCalculator('3')">3</button>
-                <button @click="appendToCalculator('-')">-</button>
+                <button @click="appendToCalculator('*')">*</button>
 
-                <button @click="appendToCalculator('0')">0</button>
                 <button @click="appendToCalculator('.')">.</button>
+                <button @click="appendToCalculator('0')">0</button>
                 <button @click="calculateResult">=</button>
                 <button @click="appendToCalculator('/')">/</button>
               </div>
@@ -339,7 +366,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from "vue";
+import { ref, onMounted, watch, nextTick, computed } from "vue";
 import api from "../services/api";
 import { useAppStore } from "../stores/app";
 import { storeToRefs } from "pinia";
@@ -359,8 +386,8 @@ const totalExpense = ref(0);
 const totalSavings = ref(0);
 const showTransactionModal = ref(false);
 const showCalculator = ref(false);
-const calculatorValue = ref("");
 const calculatorInput = ref(null);
+const rawExpression = ref("");
 const isEditing = ref(false);
 const isLoading = ref(false);
 const isLoadingData = ref(true);
@@ -370,6 +397,11 @@ const manualActor = ref(""); // Store manually entered actor
 const transactionsMeta = ref({});
 const currency = ref("Rp");
 const fileInput = ref(null);
+const focused = ref(false);
+const showPageInput = ref(false);
+const jumpPageInput = ref("");
+
+const calculatorValue = computed(() => formatExpression(rawExpression.value));
 
 const formData = ref({
   type: "expense",
@@ -386,6 +418,56 @@ const formData = ref({
     .slice(0, 16),
   proof: null,
 });
+
+const paginationPages = computed(() => {
+  const totalPages = transactionsMeta.value.last_page;
+  const current = parseInt(transactionsMeta.value.current_page);
+
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
+  const pages = [];
+
+  // Always show the first page
+  pages.push(1);
+
+  // Add "..." if current page is far from the start
+  if (current > 3) pages.push('prev-ellipsis');
+
+  const middlePages = [];
+
+  for (let i = current - 1; i <= current + 1; i++) {
+    if (i > 1 && i < totalPages) {
+      middlePages.push(i);
+    }
+  }
+
+  pages.push(...middlePages);
+
+  // Add "..." if current page is far from the end
+  if (current < totalPages - 2) pages.push('next-ellipsis');
+
+  // Always show the last page
+  if (totalPages !== 1) pages.push(totalPages);
+
+  return pages;
+});
+
+const handleJumpPage = () => {
+  const p = parseInt(jumpPageInput.value);
+  if (p >= 1 && p <= transactionsMeta.value.last_page) {
+    page.value = p;
+    fetchTransactions();
+    showPageInput.value = false;
+    jumpPageInput.value = '';
+  }
+};
+
+const goToPage = (p) => {
+  page.value = p;
+  fetchTransactions();
+};
 
 const exportTransactions = async () => {
   isLoadingData.value = true;
@@ -495,72 +577,86 @@ const closeModal = () => {
 
 const openCalculator = async () => {
   showCalculator.value = true;
-  calculatorValue.value = "";
+  // rawExpression.value = "";
 
-  await nextTick(); // Wait for the modal to render before focusing
+  await nextTick();
   calculatorInput.value?.focus();
 };
+
 const closeCalculator = () => {
   showCalculator.value = false;
 };
+
 const handleKeydown = (event) => {
   const { key } = event;
-  const calculatorKeys = [
-    "0",
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    ".",
-    "/",
-    "*",
-    "-",
-    "+",
-    "=",
-    "Enter",
-    "Backspace",
-    "Escape",
-  ];
-  if (calculatorKeys.includes(key)) {
-    event.preventDefault();
-    if (key === "Enter" || key === "=") {
-      insertCalculatorValue();
-    } else if (key === "Escape") {
-      closeCalculator();
-    } else if (key === "Backspace") {
-      deleteLastDigit();
-    } else {
-      appendToCalculator(key);
-    }
+  if (key === "Enter" || key === "=") {
+    insertCalculatorValue();
+  } else if (key === "Backspace") {
+    deleteLastDigit();
+  } else if (key === "Escape") {
+    closeCalculator();
+  } else if (/[0-9.+\-*/]/.test(key)) {
+    appendToCalculator(key);
   }
 };
 
 const appendToCalculator = (value) => {
-  calculatorValue.value += value;
+  const lastChar = rawExpression.value.slice(-1);
+
+  // Prevent two decimals in a number
+  if (value === "." && /\d*\.\d*$/.test(rawExpression.value)) return;
+
+  // Prevent operator chaining
+  if (isOperator(value) && isOperator(lastChar)) {
+    rawExpression.value = rawExpression.value.slice(0, -1) + value;
+    return;
+  }
+
+  rawExpression.value += value;
 };
 
 const deleteLastDigit = () => {
-  calculatorValue.value = calculatorValue.value.slice(0, -1);
+  rawExpression.value = rawExpression.value.slice(0, -1);
 };
 
 const clearCalculator = () => {
-  calculatorValue.value = "";
+  rawExpression.value = "";
 };
 
+const formatExpression = (expr) => {
+  // Split expression into numbers and operators
+  return expr
+    .split(/([+\-*/])/)
+    .map((part) => {
+      if (!isNaN(part) && part !== "") {
+        return Number(part).toLocaleString();
+      } else {
+        return part;
+      }
+    })
+    .join(" ");
+};
+
+const isOperator = (char) => ["+", "-", "*", "/"].includes(char);
+
 const calculateResult = () => {
-  calculatorValue.value = eval(calculatorValue.value).toString();
+  try {
+    const cleaned = rawExpression.value.replace(/,/g, "");
+    const result = Function(`return (${cleaned})`)();
+    rawExpression.value = result.toString();
+  } catch (error) {
+    console.error("Invalid calculation");
+  }
 };
 
 const insertCalculatorValue = () => {
-  if (!calculatorValue.value) return;
+  if (!rawExpression.value) return;
+
   calculateResult();
-  formData.value.formattedAmount = calculatorValue.value;
-  formData.value.amount = calculatorValue.value.replace(/[^0-9.]/g, "");
+
+  const result = Number(rawExpression.value);
+  formData.value.formattedAmount = formatAmount(result);
+  formData.value.amount = result.toString();
   closeCalculator();
 };
 
@@ -830,18 +926,23 @@ onMounted(async () => {
 }
 .pagination {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
   margin-top: 20px;
+  max-width: 100%;
 }
 
 .pagination button {
   padding: 6px 12px;
+  flex-shrink: 0;
+  min-width: 40px;
   border: 1px solid #eab308;
   background: transparent;
   color: #eab308;
   border-radius: 5px;
   cursor: pointer;
+  font-size: calc(14px * var(--scale-factor, 1));
 }
 
 .pagination button.active-page {
@@ -849,6 +950,15 @@ onMounted(async () => {
   color: black;
   font-weight: bold;
 }
+
+.pagination-ellipsis {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #ccc;
+  font-size: 18px;
+}
+
 .input-field {
   width: 100%;
   padding: 12px;
@@ -1027,6 +1137,10 @@ onMounted(async () => {
   .btn-import {
     width: 100%; /* Ensure full width on mobile */
   }
+
+  .pagination {
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1038,6 +1152,9 @@ onMounted(async () => {
   }
   .summary-item {
     font-size: 12px;
+  }
+  .pagination {
+    width: 100%;
   }
 }
 </style>
