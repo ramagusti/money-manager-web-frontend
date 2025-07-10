@@ -223,6 +223,7 @@ body::before {
 /* Mobile View */
 .app-content.mobile-view {
   margin-left: 0;
+  padding-bottom: calc(100px * var(--scale-factor));
 }
 
 /* Prevent overflow issues */
