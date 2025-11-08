@@ -1,72 +1,18 @@
 <template>
-  <section class="features-container">
-    <div class="features-content">
-      <h2 class="features-title">Why Choose PiggyBang?</h2>
-      <div class="features-grid">
-        <TransitionGroup
-          tag="div"
-          class="features-items"
-          :css="false"
-          @enter="onEnter"
-        >
-          <div
-            v-for="feature in features"
-            :key="feature.title"
-            class="feature-card"
-          >
-            <div class="feature-icon">
-              <svg
-                v-if="feature.icon === 'budget'"
-                class="icon"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 10h11M9 21V8m5-3a2 2 0 100-4 2 2 0 000 4z"
-                />
-              </svg>
-              <svg
-                v-if="feature.icon === 'investment'"
-                class="icon"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M4 6h16M4 10h16M4 14h16M4 18h16"
-                />
-              </svg>
-              <svg
-                v-if="feature.icon === 'security'"
-                class="icon"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 11c0 3.314-2.686 6-6 6S0 14.314 0 11s2.686-6 6-6 6 2.686 6 6z"
-                />
-              </svg>
-            </div>
-            <h3 class="feature-title">{{ feature.title }}</h3>
-            <p class="feature-description">{{ feature.description }}</p>
-          </div>
-        </TransitionGroup>
-      </div>
-    </div>
+  <section id="features" class="features">
+    <TransitionGroup tag="div" class="features-grid" :css="false" @enter="onEnter">
+      <article v-for="(feature, index) in features" :key="feature.title" class="feature-card">
+        <div class="feature-card__head">
+          <span class="feature-index">0{{ index + 1 }}</span>
+          <h3>{{ feature.title }}</h3>
+        </div>
+        <p class="feature-description">{{ feature.description }}</p>
+        <ul v-if="feature.bullets?.length">
+          <li v-for="bullet in feature.bullets" :key="bullet">{{ bullet }}</li>
+        </ul>
+        <span class="feature-tag" v-if="feature.tag">{{ feature.tag }}</span>
+      </article>
+    </TransitionGroup>
   </section>
 </template>
 
@@ -74,132 +20,139 @@
 import { ref } from "vue";
 import { animate } from "motion";
 
-// Features Data
 const features = ref([
   {
-    title: "Smart Budgeting",
-    description: "AI-powered insights to track income & expenses",
-    icon: "budget",
+    title: "Unified group workspaces",
+    description: "Every group operates in a dedicated, distraction-free canvas with shared filters and permissions.",
+    bullets: ["Role-based visibility for owners, admins, and members", "Real-time balances and goal tracking"],
+    tag: "Collaboration",
   },
   {
-    title: "Investment Tracking",
-    description: "Monitor and grow your assets effortlessly",
-    icon: "investment",
+    title: "Narrative-ready data",
+    description: "Snapshots, exports, and saved timelines mean updates to investors and stakeholders stay consistent.",
+    bullets: ["Download-ready XLS templates", "Automatic highlights for trends and anomalies"],
+    tag: "Reporting",
   },
   {
-    title: "Secure & Private",
-    description: "Bank-level encryption for ultimate security",
-    icon: "security",
+    title: "Calm security posture",
+    description: "Bank-grade encryption, audit-friendly logs, and privacy-first defaults keep sensitive numbers safe.",
+    bullets: ["Optional proof uploads with lifecycle policies", "Granular deletions with soft-restore trails"],
+    tag: "Trust",
   },
 ]);
 
-// Function to animate on enter
 async function onEnter(el, done) {
-  await animate(el, { opacity: 1, scale: [0.9, 1] }, { duration: 0.5 });
+  await animate(el, { opacity: [0, 1], y: [16, 0] }, { duration: 0.4 });
   done();
 }
 </script>
 
 <style scoped>
-/* Features Container */
-.features-container {
-  padding: 50px 20px;
-  text-align: center;
-}
-
-/* Content Wrapper */
-.features-content {
-  max-width: 1200px;
-  margin: auto;
-}
-
-/* Title */
-.features-title {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #eab308;
-  margin-bottom: 20px;
-}
-
-/* Features Grid */
-.features-items {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  justify-content: center;
-}
-
-/* Feature Card */
-.feature-card {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(12px);
-  border-radius: 15px;
-  padding: 20px;
-  text-align: center;
-  box-shadow: 0 8px 24px rgba(255, 215, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-  will-change: transform, box-shadow;
-}
-
-.feature-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 30px rgba(255, 215, 0, 0.3); /* Slightly stronger shadow */
-}
-
-/* Feature Icon */
-.feature-icon {
+.features {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 28px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  padding: 40px;
+  background: rgba(15, 23, 42, 0.55);
+  box-shadow: 0 25px 60px rgba(2, 6, 23, 0.55);
   display: flex;
-  justify-content: center;
-  margin-bottom: 10px;
+  flex-direction: column;
+  gap: 32px;
+  scroll-margin-top: 80px;
 }
 
-/* Icon */
-.icon {
-  width: 50px;
-  height: 50px;
-  color: #eab308;
-  animation: pulse 1.5s infinite alternate ease-in-out;
+.features__header {
+  max-width: 620px;
 }
 
-/* Feature Title */
-.feature-title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #eab308;
-  margin-bottom: 8px;
+.features__header h2 {
+  font-size: clamp(2rem, 3vw, 2.5rem);
+  color: #f8fafc;
 }
 
-/* Feature Description */
+.features__header p {
+  color: #cbd5f5;
+  margin-top: 10px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.feature-card {
+  border-radius: 20px;
+  padding: 28px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.5);
+  box-shadow: 0 20px 40px rgba(2, 6, 23, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.feature-card__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.feature-index {
+  font-family: "Space Mono", monospace;
+  font-size: 0.95rem;
+  color: #a5b4fc;
+  letter-spacing: 0.15em;
+}
+
+.feature-card h3 {
+  font-size: 1.35rem;
+  color: #f8fafc;
+  margin: 0;
+}
+
 .feature-description {
-  font-size: 1rem;
-  color: #d1d5db;
+  color: #cbd5f5;
+  line-height: 1.5;
 }
 
-/* Animation */
-@keyframes pulse {
-  0% {
-    opacity: 0.7;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1.1);
-  }
+.feature-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #94a3b8;
+  font-size: 0.95rem;
 }
 
-/* Responsive Fixes */
+.feature-card li::before {
+  content: "—";
+  margin-right: 8px;
+  color: #fbbf24;
+}
+
+.feature-tag {
+  align-self: flex-start;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(248, 250, 252, 0.2);
+  color: #f8fafc;
+}
+
 @media (max-width: 768px) {
-  .features-title {
-    font-size: 2rem;
+  .features {
+    padding: 28px;
   }
+}
 
-  .feature-title {
-    font-size: 1.25rem;
-  }
-
-  .feature-description {
-    font-size: 0.9rem;
+@media (max-width: 640px) {
+  .feature-card {
+    padding: 24px;
   }
 }
 </style>
