@@ -84,6 +84,7 @@ const scrollToMetrics = () => {
   border-radius: 28px;
   border: 1px solid rgba(148, 163, 184, 0.25);
   background: linear-gradient(10deg, rgba(15, 23, 42, 0.9), rgba(30, 64, 175, 0.4));
+  height: auto;
 }
 
 .hero-grid {

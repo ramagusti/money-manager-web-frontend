@@ -1,5 +1,11 @@
 <template>
   <section id="features" class="features">
+    <header class="features__header">
+      <p class="eyebrow">What you get</p>
+      <h2>Operate with discipline, present with confidence.</h2>
+      <p>Each workspace ships with the tooling you need to keep every contributor aligned before the next investor update.</p>
+    </header>
+
     <TransitionGroup tag="div" class="features-grid" :css="false" @enter="onEnter">
       <article v-for="(feature, index) in features" :key="feature.title" class="feature-card">
         <div class="feature-card__head">

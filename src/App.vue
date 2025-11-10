@@ -8,18 +8,27 @@
 
     <!-- Main Layout -->
     <div v-if="!appLoading" class="app-layout">
-      <!-- Sidebar (Persistent in Dashboard & Transactions) -->
-      <Sidebar v-if="isDashboard" />
+      <Sidebar
+        v-if="isDashboard"
+        v-model:mobileOpen="mobileSidebarOpen"
+      />
 
-      <!-- Page Content -->
       <div
-        :class="{
-          'app-content': isDashboard,
-          collapsed: isDashboard && isCollapsed,
-          'mobile-view': isMobile,
-        }"
-        style="overflow-y: auto"
+        :class="[
+          isDashboard ? 'app-content' : 'app-content--full',
+          {
+            collapsed: isDashboard && isCollapsed,
+            'mobile-view': isMobile,
+          },
+        ]"
       >
+        <button
+          v-if="isDashboard"
+          class="mobile-nav-trigger"
+          @click="mobileSidebarOpen = true"
+        >
+          ☰ Menu
+        </button>
         <router-view />
       </div>
     </div>
@@ -32,7 +41,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from "vue";
+import { ref, onMounted, onBeforeUnmount, watch, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useAppStore } from "./stores/app";
 import { storeToRefs } from "pinia";
@@ -47,6 +56,7 @@ const { appLoading, isCollapsed, currentGroup } = storeToRefs(appStore);
 const router = useRouter();
 const isMobile = ref(window.innerWidth <= 768);
 const scaleFactor = ref(1); // Controls dynamic scaling
+const mobileSidebarOpen = ref(false);
 
 const isDashboard = computed(() =>
   ["/dashboard", "/transactions", "/settings"].includes(router.currentRoute.value.path)
@@ -64,6 +74,8 @@ const handleResize = () => {
   
   if (isMobile.value) {
     appStore.setCollapsed(true);
+  } else {
+    mobileSidebarOpen.value = false;
   }
 };
 
@@ -72,12 +84,23 @@ onMounted(() => {
   handleResize();
 });
 
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", handleResize);
+});
+
 watch(isCollapsed, (newVal) => {
   document.documentElement.style.setProperty(
     "--sidebar-width",
     `${newVal ? 80 : 240 * scaleFactor.value}px`
   );
 });
+
+watch(
+  () => router.currentRoute.value.fullPath,
+  () => {
+    mobileSidebarOpen.value = false;
+  }
+);
 </script>
 
 <style>
@@ -91,10 +114,13 @@ body {
   background: linear-gradient(135deg, #0f172a, #1e293b);
   color: #eab308;
   margin: 0;
-  height: 100vh;
-  overflow: hidden; /* Prevents scrolling */
-  display: flex;
-  flex-direction: column;
+  min-height: 100vh;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+.modal-open {
+  overflow: hidden;
 }
 
 body::before {
@@ -118,57 +144,63 @@ body::before {
 }
 
 /* Buttons */
-.btn-primary {
-  background: #eab308;
-  color: black;
-  padding: calc(12px * var(--scale-factor));
-  border-radius: calc(8px * var(--scale-factor));
-  font-size: calc(14px * var(--scale-factor));
-  transition: background 0.2s ease-in-out;
-  display: flex;
+.btn-primary,
+.btn-secondary,
+.btn-outline,
+.btn-danger {
+  border-radius: 999px;
+  padding: clamp(10px, 1.8vw, 14px) clamp(20px, 4vw, 32px);
+  font-weight: 600;
+  font-size: clamp(0.9rem, 1vw, 1rem);
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  text-decoration: none;
 }
-.btn-primary:hover {
-  background: #facc15;
-}
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+
+.btn-primary {
+  background: linear-gradient(120deg, #fbbf24, #f97316);
+  color: #0f172a;
+  box-shadow: 0 15px 30px rgba(249, 115, 22, 0.35);
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: #eab308;
-  padding: calc(12px * var(--scale-factor));
-  border-radius: calc(8px * var(--scale-factor));
-  font-size: calc(14px * var(--scale-factor));
-  font-weight: bold;
-  transition: background 0.2s ease-in-out;
+  background: linear-gradient(120deg, #22d3ee, #6366f1);
+  color: #0f172a;
+  box-shadow: 0 20px 40px rgba(14, 165, 233, 0.35);
+  border: none;
 }
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-.btn-secondary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid rgba(248, 250, 252, 0.6);
+  color: #f8fafc;
 }
 
 .btn-danger {
-  background: #dc2626;
-  color: white;
-  padding: calc(12px * var(--scale-factor));
-  border-radius: calc(8px * var(--scale-factor));
-  font-size: calc(14px * var(--scale-factor));
-  font-weight: bold;
-  transition: background 0.2s ease-in-out;
+  background: linear-gradient(130deg, #dc2626, #fb923c);
+  color: #f8fafc;
 }
+
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-outline:hover,
 .btn-danger:hover {
-  background: #f64545;
+  transform: translateY(-2px);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
 }
+
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-outline:disabled,
 .btn-danger:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* Spinner */
@@ -194,52 +226,123 @@ body::before {
 .app-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
 }
 
-/* Main Layout */
 .app-layout {
-  display: block;
+  display: flex;
   flex: 1;
-  height: 100vh;
-  overflow: auto;
+  min-height: 100vh;
+  position: relative;
 }
 
-/* Sidebar will stay fixed, content scrolls */
 .app-content {
   flex-grow: 1;
-  height: 100vh;
-  padding: calc(16px * var(--scale-factor));
-  transition: margin-left 0.3s ease-in-out;
+  min-height: 100vh;
+  padding: clamp(16px, 3vw, 32px);
+  transition: margin-left 0.3s ease-in-out, padding 0.3s ease;
   margin-left: calc(180px * var(--scale-factor));
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.35);
 }
 
-/* Collapsed Sidebar */
+.app-content--full {
+  width: 100%;
+  /* padding: clamp(16px, 4vw, 40px); */
+}
+
 .app-content.collapsed {
-  margin-left: calc(40px * var(--scale-factor));
+  margin-left: calc(80px * var(--scale-factor));
 }
 
-/* Mobile View */
 .app-content.mobile-view {
   margin-left: 0;
-  padding-bottom: calc(100px * var(--scale-factor));
+  padding: 20px 16px 80px;
 }
 
-/* Prevent overflow issues */
-.app-layout::-webkit-scrollbar {
-  background: linear-gradient(135deg, #0f172a, #1e293b);
-  width: calc(6px * var(--scale-factor));
-}
-.app-layout::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
+.mobile-nav-trigger {
+  display: none;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  color: #f8fafc;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  width: max-content;
 }
 
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(32px, 5vw, 56px);
+  color: #f8fafc;
+  padding-bottom: clamp(32px, 6vw, 80px);
+}
+
+.page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.page-head h1 {
+  margin: 6px 0 0;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  color: #f8fafc;
+}
+
+.page-head__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.75rem;
+  color: #a5b4fc;
+}
+
+.base-card {
+  border-radius: 28px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(2, 6, 23, 0.7);
+  padding: clamp(20px, 3vw, 32px);
+  box-shadow: 0 30px 60px rgba(2, 6, 23, 0.45);
+}
+
+.base-card--surface {
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(15, 23, 42, 0.55);
+  padding: clamp(18px, 2.5vw, 28px);
+  box-shadow: none;
+}
+
+.base-card--stretch {
+  height: 100%;
+}
+
+.section-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+.app-layout::-webkit-scrollbar,
 .app-content::-webkit-scrollbar {
   background: linear-gradient(135deg, #0f172a, #1e293b);
   width: calc(6px * var(--scale-factor));
 }
+
+.app-layout::-webkit-scrollbar-thumb,
 .app-content::-webkit-scrollbar-thumb {
   background-color: rgba(255, 255, 255, 0.2);
   border-radius: 10px;
@@ -252,16 +355,20 @@ body::before {
 
 @media (max-width: 768px) {
   :root { --scale-factor: 0.75; }
-  .app-content { padding: 10px; }
   .app-content {
     margin-left: 0 !important;
-    padding: 12px;
+    padding: 24px 16px 80px;
+  }
+  .mobile-nav-trigger {
+    display: inline-flex;
   }
 }
 
 @media (max-width: 480px) {
   :root { --scale-factor: 0.65; }
-  .app-content { padding: 8px; }
+  .app-content {
+    padding: 20px 14px 64px;
+  }
 }
 
 /* Overlay Animation */
@@ -316,6 +423,8 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow-y: auto;
+  padding: clamp(24px, 5vw, 48px) clamp(12px, 4vw, 32px);
   z-index: 100;
 }
 .modal-content {
@@ -325,9 +434,10 @@ body::before {
   padding: 30px;
   box-shadow: 0 8px 24px rgba(255, 215, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  width: 380px;
+  width: min(420px, 92vw);
   text-align: center;
-  overflow: hidden;
+  max-height: 90vh;
+  overflow-y: auto;
   transition: height 0.3s ease-in-out;
 }
 .loading-container {

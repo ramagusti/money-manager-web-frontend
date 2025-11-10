@@ -3,7 +3,11 @@
     <Transition name="modal-fade">
       <div v-if="isOpen" class="modal-overlay" @click.self="close">
         <Transition name="modal-scale">
-          <div v-if="isOpen" class="modal-content" ref="modalBox">
+          <div
+            v-if="isOpen"
+            class="modal-content auth-modal__content"
+            ref="modalBox"
+          >
             <Transition
               name="fade-slide"
               mode="out-in"
@@ -23,54 +27,39 @@
 
               <template v-else>
                 <div key="login">
-                  <h2 class="text-3xl font-semibold text-gold mb-6">Login</h2>
+                  <h2 class="text-3xl font-semibold text-gold mb-6 text-center">Login</h2>
                   <form @submit.prevent="handleLogin" class="space-y-4">
-                    <div class="input-group">
-                      <input
-                        type="email"
-                        v-model="email"
-                        placeholder="Email"
-                        class="input-field"
-                        :class="{ 'border-red-500': errors.email }"
-                        @focus="clearError('email')"
-                        required
-                      />
-                      <Transition name="fade">
-                        <p
-                          v-if="errors.email"
-                          class="text-red-400 text-sm mt-1"
-                        >
-                          {{ errors.email }}
-                        </p>
-                      </Transition>
-                    </div>
-                    <div class="input-group">
-                      <input
-                        type="password"
-                        v-model="password"
-                        placeholder="Password"
-                        class="input-field"
-                        :class="{ 'border-red-500': errors.password }"
-                        @focus="clearError('password')"
-                        required
-                      />
-                      <Transition name="fade">
-                        <p
-                          v-if="errors.password"
-                          class="text-red-400 text-sm mt-1"
-                        >
-                          {{ errors.password }}
-                        </p>
-                      </Transition>
-                    </div>
-                    <!-- <Transition name="fade">
-                      <p
-                        v-if="errors.general"
-                        class="text-red-400 text-sm text-center"
-                      >
-                        {{ errors.general }}
+                    <input
+                      type="email"
+                      v-model="email"
+                      placeholder="Email"
+                      class="input-field"
+                      :class="{ 'border-red-500': errors.email }"
+                      @focus="clearError('email')"
+                      required
+                    />
+                    <Transition name="fade">
+                      <p v-if="errors.email" class="text-red-400 text-sm mt-1">
+                        {{ errors.email }}
                       </p>
-                    </Transition> -->
+                    </Transition>
+                    <input
+                      type="password"
+                      v-model="password"
+                      placeholder="Password"
+                      class="input-field"
+                      :class="{ 'border-red-500': errors.password }"
+                      @focus="clearError('password')"
+                      required
+                    />
+                    <Transition name="fade">
+                      <p
+                        v-if="errors.password"
+                        class="text-red-400 text-sm mt-1"
+                      >
+                        {{ errors.password }}
+                      </p>
+                    </Transition>
                     <button
                       type="submit"
                       class="btn-primary w-full"
@@ -80,55 +69,30 @@
                       <span v-else>Login</span>
                     </button>
                   </form>
-                  <p class="text-gray-400 under-text mt-4">
+                  <Transition name="fade">
+                    <p v-if="errors.general" class="auth-error">
+                      {{ errors.general }}
+                      <span
+                        v-if="errors.general.includes('verify your email')"
+                        @click="resendVerification"
+                        class="auth-link"
+                      >
+                        Resend verification
+                      </span>
+                    </p>
+                  </Transition>
+                  <p class="auth-under-text mt-4">
                     Forgot your password?
                     <span
-                      class="text-gold cursor-pointer hover:underline"
+                      class="auth-link"
                       @click="router.push('/forgot-password')"
                     >
                       Reset here
                     </span>
                   </p>
-                  <Transition name="fade">
-                    <div v-if="errors.email" class="under-text mt-2">
-                      <p class="text-red-400">
-                        {{ errors.email }}
-                      </p>
-                    </div>
-                  </Transition>
-                  <Transition name="fade">
-                    <div v-if="errors.password" class="under-text mt-2">
-                      <p class="text-red-400">
-                        {{ errors.password }}
-                      </p>
-                    </div>
-                  </Transition>
-                  <Transition name="fade">
-                    <div v-if="errors.general" class="under-text mt-2">
-                      <p class="text-red-400">
-                        {{ errors.general }}
-                      </p>
-
-                      <!-- Show the resend verification link only if the email is not resent -->
-                      <p
-                        v-if="errors.general.includes('verify your email')"
-                        class="text-gray-400 mt-2"
-                      >
-                        Didn't receive an email?
-                        <span
-                          @click="resendVerification"
-                          class="text-gold cursor-pointer hover:underline"
-                        >
-                          Resend
-                        </span>
-                      </p>
-                    </div>
-                  </Transition>
-                  <p class="mt-4 text-gray-400 under-text">
+                  <p class="auth-under-text">
                     Don't have an account?
-                    <span
-                      @click="router.push('/signup')"
-                      class="text-gold cursor-pointer hover:underline"
+                    <span @click="router.push('/signup')" class="auth-link"
                       >Sign Up</span
                     >
                   </p>
@@ -143,7 +107,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, nextTick } from "vue";
+import { ref, defineProps, nextTick, watch, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../stores/auth";
 import api from "../services/api";
@@ -157,6 +121,21 @@ const authStore = useAuthStore();
 
 const props = defineProps({ isOpen: Boolean });
 const router = useRouter();
+
+watch(
+  () => props.isOpen,
+  (open) => {
+    if (typeof document === "undefined") return;
+    document.body.classList.toggle("modal-open", open);
+  },
+  { immediate: true }
+);
+
+onBeforeUnmount(() => {
+  if (typeof document !== "undefined") {
+    document.body.classList.remove("modal-open");
+  }
+});
 
 const handleLogin = async () => {
   isLoading.value = true;
@@ -219,6 +198,59 @@ const resetHeight = () => {
   }
 };
 </script>
+
+<style scoped>
+.auth-modal__content {
+  width: min(560px, 94vw);
+  text-align: left;
+  padding: clamp(28px, 5vw, 48px);
+}
+
+.auth-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.auth-modal__head h2 {
+  margin: 6px 0;
+  color: #f8fafc;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #cbd5f5;
+  font-size: 0.95rem;
+}
+
+.auth-error {
+  color: #fb7185;
+  font-size: 0.9rem;
+}
+
+.auth-under-text {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.auth-link {
+  color: #fbbf24;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+</style>
 
 <style scoped>
 .input-field {

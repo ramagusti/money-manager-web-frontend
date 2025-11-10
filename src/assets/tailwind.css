@@ -8,9 +8,9 @@ body {
 }
 
 /* ===== Header Styles ===== */
-header {
+/* header {
   @apply fixed top-0 left-0 w-full bg-white shadow-md z-50;
-}
+} */
 
 header nav button {
   @apply px-4 py-2 text-gray-900 border border-gray-900 rounded-lg transition-all duration-200;

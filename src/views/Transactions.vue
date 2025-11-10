@@ -2,86 +2,85 @@
   <div v-if="isLoadingData" class="loading-container">
     <div class="loading-spinner"></div>
   </div>
-  <div class="transactions-container">
-    <!-- Header & Summary -->
-    <div class="transactions-header">
-      <h2 class="font-bold text-white">📜 Transactions</h2>
-      <button class="btn-primary" @click="openModal">➕ Add Transaction</button>
-    </div>
-    <div class="summary-cards">
-      <div class="summary-item income">
-        <span class="label">Income</span>
-        <span class="value"
-          >{{ currency }} {{ formatAmount(totalIncome) }}</span
-        >
-      </div>
-      <div class="summary-item expense">
-        <span class="label">Expenses</span>
-        <span class="value"
-          >{{ currency }} {{ formatAmount(totalExpense) }}</span
-        >
-      </div>
-      <div class="summary-item savings">
-        <span class="label">Savings</span>
-        <span class="value"
-          >{{ currency }} {{ formatAmount(totalSavings) }}</span
-        >
-      </div>
-    </div>
 
-    <!-- Filters & Import/Export Buttons -->
-    <div class="filters-container">
-      <div class="filters">
-        <input
-          type="month"
-          v-model="selectedMonth"
-          @change="fetchTransactions"
-          class="filter-input"
-        />
-        <select
-          v-model="selectedType"
-          @change="fetchTransactions"
-          class="filter-input"
-        >
-          <option value="" style="color: black">All</option>
-          <option value="income" style="color: black">Income</option>
-          <option value="expense" style="color: black">Expense</option>
-        </select>
-        <select
-          v-model="selectedCategory"
-          @change="fetchTransactions"
-          class="filter-input"
-        >
-          <option value="" style="color: black">All Categories</option>
-          <option
-            v-for="category in categories.filter(
-              (category) =>
-                selectedType === '' ||
-                selectedType === null ||
-                category.type === selectedType
-            )"
-            :key="category.id"
-            :value="category.id"
-            style="color: black"
-          >
-            {{
-              selectedType === "" || selectedType === null
-                ? category.name + " (" + category.type + ")"
-                : category.name
-            }}
-          </option>
-        </select>
-      </div>
+  <div class="page transactions-page">
+    <PageHeader
+      pill="Money movement"
+      title="Transactions"
+      subtitle="Review, filter, and share every inflow and outflow for your group."
+    >
+      <template #actions>
+        <button class="btn-secondary" @click="downloadTemplate">
+          Template
+        </button>
+        <button class="btn-primary" @click="openModal">
+          + Add transaction
+        </button>
+      </template>
+    </PageHeader>
 
-      <div class="export-buttons">
-        <button class="btn-export" @click="exportTransactions">
-          📤 Export
+    <section class="summary-grid">
+      <StatCard
+        label="Income"
+        :value="`${currency} ${formatAmount(totalIncome)}`"
+        helper="Tracked inflow"
+        tone="positive"
+      />
+      <StatCard
+        label="Expenses"
+        :value="`${currency} ${formatAmount(totalExpense)}`"
+        helper="Tracked outflow"
+        tone="negative"
+      />
+      <StatCard
+        label="Savings"
+        :value="`${currency} ${formatAmount(totalSavings)}`"
+        helper="Income - expenses"
+      />
+    </section>
+
+    <BaseCard class="filters-panel">
+      <div class="filters-grid">
+        <label>
+          <span>Month</span>
+          <input
+            type="month"
+            v-model="selectedMonth"
+            @change="fetchTransactions"
+          />
+        </label>
+        <label>
+          <span>Type</span>
+          <select v-model="selectedType" @change="fetchTransactions">
+            <option value="">All</option>
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
+          </select>
+        </label>
+        <label>
+          <span>Category</span>
+          <select v-model="selectedCategory" @change="fetchTransactions">
+            <option value="">All categories</option>
+            <option
+              v-for="category in filteredCategories"
+              :key="category.id"
+              :value="category.id"
+            >
+              {{
+                selectedType === "" || selectedType === null
+                  ? `${category.name} (${category.type})`
+                  : category.name
+              }}
+            </option>
+          </select>
+        </label>
+      </div>
+      <div class="filters-actions">
+        <button class="btn-outline" @click="exportTransactions">
+          Export
         </button>
-        <button class="btn-template" @click="downloadTemplate">
-          📥 Download Template
-        </button>
-        <label class="btn-import">
-          📑 Import
+        <label class="btn-outline">
+          Import
           <input
             type="file"
             ref="fileInput"
@@ -90,85 +89,63 @@
           />
         </label>
       </div>
-    </div>
+    </BaseCard>
 
-    <!-- Transactions List -->
-    <div class="transactions-list">
-      <table v-if="transactions.length > 0" class="responsive-table">
-        <thead>
-          <tr>
-            <th>Description</th>
-            <th>Amount</th>
-            <th>Category</th>
-            <th>Actor</th>
-            <th>Date</th>
-            <!-- <th>Proof</th> -->
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="transaction in transactions" :key="transaction.id">
-            <td>{{ transaction.description || "N/A" }}</td>
-            <td
-              :class="
-                transaction.type === 'expense' ? 'text-red' : 'text-green'
-              "
-            >
-              {{ currency }} {{ formatAmount(transaction.amount) }}
-            </td>
-            <td>{{ transaction.category.name }}</td>
-            <td>{{ transaction.actor }}</td>
-            <td>{{ transaction.transaction_time }}</td>
-            <!-- <td>
-              <a
-                v-if="transaction.proof"
-                :href="`/storage/${transaction.proof}`"
-                target="_blank"
-                class="text-blue-400"
-              >
-                📎 View
-              </a>
-            </td> -->
-            <td>
-              <button @click="editTransaction(transaction)">✏️ Edit</button>
-              <br />
-              <button
-                @click="deleteTransaction(transaction.id)"
-                class="text-red"
-              >
-                🗑 Delete
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <p v-else class="text-center text-gray-400 mt-8">No transactions found</p>
-    </div>
+    <BaseCard class="table-card">
+      <div class="section-label">Ledger</div>
+      <div class="table-scroll">
+        <table v-if="transactions.length > 0" class="responsive-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>Category</th>
+              <th>Actor</th>
+              <th>Date</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="transaction in transactions" :key="transaction.id">
+              <td>{{ transaction.description || "Untitled" }}</td>
+              <td :class="transaction.type === 'expense' ? 'text-red' : 'text-green'">
+                {{ currency }} {{ formatAmount(transaction.amount) }}
+              </td>
+              <td>{{ transaction.category.name }}</td>
+              <td>{{ transaction.actor || "—" }}</td>
+              <td>{{ transaction.transaction_time }}</td>
+              <td class="table-actions">
+                <button @click="editTransaction(transaction)" class="ghost-btn">Edit</button>
+                <button @click="deleteTransaction(transaction.id)" class="ghost-btn danger">
+                  Delete
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-else class="empty-table">No transactions found</p>
+      </div>
+    </BaseCard>
 
-    <!-- Pagination -->
-    <div class="pagination">
-      <button v-if="page > 1" @click="prevPage">⬅ Previous</button>
-
+    <BaseCard tag="div" surface class="pagination">
+      <button v-if="page > 1" @click="prevPage">Previous</button>
       <template v-for="(p, index) in paginationPages" :key="index">
         <button
           v-if="typeof p === 'number'"
-          :class="{
-            'active-page': parseInt(transactionsMeta.current_page) === p,
-          }"
+          :class="{ 'active-page': parseInt(transactionsMeta.current_page) === p }"
           @click="goToPage(p)"
         >
           {{ p }}
         </button>
-
         <button v-else @click="showPageInput = true" class="pagination-ellipsis">
           ...
         </button>
       </template>
-
       <button v-if="transactionsMeta.next_page_url" @click="nextPage">
-        Next ➡
+        Next
       </button>
-    </div>
+    </BaseCard>
+
     <div v-if="showPageInput" class="jump-page-modal">
       <input
         v-model="jumpPageInput"
@@ -180,10 +157,9 @@
         @keyup.enter="handleJumpPage"
       />
       <button @click="handleJumpPage" class="btn-primary ml-2">Go</button>
-      <button @click="showPageInput = false" class="ml-2">Cancel</button>
+      <button @click="showPageInput = false" class="ml-2 btn-secondary">Cancel</button>
     </div>
 
-    <!-- Transaction Modal -->
     <Teleport to="body">
       <Transition name="modal-fade">
         <div
@@ -192,96 +168,121 @@
           @click.self="closeModal"
         >
           <Transition name="modal-scale">
-            <div class="modal-content">
-              <h2 class="text-3xl font-semibold text-gold mb-4">
-                {{ isEditing ? "Edit Transaction" : "Add Transaction" }}
-              </h2>
-              <form
-                @submit.prevent="saveTransaction"
-                class="space-y-4"
-                ref="transactionForm"
-              >
-                <select v-model="formData.type" required class="input-field">
-                  <option value="income">Income</option>
-                  <option value="expense">Expense</option>
-                </select>
-                <select
-                  v-model="formData.category_id"
-                  required
-                  class="input-field"
-                >
-                  <option
-                    v-for="category in categories.filter(
-                      (category) => category.type === formData.type
-                    )"
-                    :key="category.id"
-                    :value="category.id"
-                  >
-                    {{ category.name }}
-                  </option>
-                </select>
-                <input
-                  type="text"
-                  v-model="formData.description"
-                  placeholder="Description (Optional)"
-                  class="input-field"
-                />
-                <!-- Amount Input with Calculator Button -->
-                <div class="input-group">
-                  <input
-                    type="text"
-                    v-model="formData.formattedAmount"
-                    :placeholder="`Amount (${currency})`"
-                    required
-                    class="input-field"
-                  />
-                  <span class="calculator-btn-wrapper">
-                    <button
-                      type="button"
-                      class="calculator-btn px-4"
-                      @click="openCalculator"
-                    >
-                      🖩
-                    </button>
-                  </span>
+            <div class="modal-content modal-content--wide">
+              <header class="modal-head">
+                <div>
+                  <p class="pill">{{ isEditing ? "Update entry" : "New entry" }}</p>
+                  <h2>{{ isEditing ? "Edit transaction" : "Add transaction" }}</h2>
+                  <p class="modal-subtitle">
+                    Keep it short—just the essentials the team needs to reconcile.
+                  </p>
                 </div>
-                <!-- Actor selection with "Other" option -->
-                <select v-model="selectedActor" class="input-field">
-                  <option value="" disabled>Select Actor</option>
-                  <option
-                    v-for="member in members"
-                    :key="member.id"
-                    :value="member.name"
-                  >
-                    {{ member.name }}
-                  </option>
-                  <option value="other">Other (Type Manually)</option>
-                </select>
+                <button type="button" class="btn-secondary" @click="closeModal">Close</button>
+              </header>
 
-                <!-- Manual actor input field (shown only if "Other" is selected) -->
-                <input
-                  v-if="selectedActor === 'other'"
-                  type="text"
-                  v-model="manualActor"
-                  placeholder="Enter Actor Name"
-                  class="input-field"
-                />
-                <input
-                  type="datetime-local"
-                  v-model="formData.transaction_time"
-                  required
-                  class="input-field"
-                  step="1"
-                />
-                <!-- <input
-                  type="file"
-                  @change="handleFileUpload"
-                  class="input-field"
-                /> -->
-                <button type="submit" class="btn-primary w-full">
-                  <span v-if="isLoading" class="spinner"></span>
-                  <span v-else>{{ isEditing ? "Update" : "Create" }}</span>
-                </button>
+              <form @submit.prevent="saveTransaction" ref="transactionForm" class="transaction-form">
+                <div class="form-grid">
+                  <label>
+                    <span>Type</span>
+                    <select v-model="formData.type" required class="input-field">
+                      <option value="income">Income</option>
+                      <option value="expense">Expense</option>
+                    </select>
+                  </label>
+
+                  <label>
+                    <span>Category</span>
+                    <select
+                      v-model="formData.category_id"
+                      required
+                      class="input-field"
+                    >
+                      <option
+                        v-for="category in categories.filter(
+                          (category) => category.type === formData.type
+                        )"
+                        :key="category.id"
+                        :value="category.id"
+                      >
+                        {{ category.name }}
+                      </option>
+                    </select>
+                  </label>
+
+                  <label class="form-span">
+                    <span>Description</span>
+                    <input
+                      type="text"
+                      v-model="formData.description"
+                      placeholder="Add a short note"
+                      class="input-field"
+                    />
+                  </label>
+
+                  <label>
+                    <span>Amount ({{ currency }})</span>
+                    <div class="input-group">
+                      <input
+                        type="text"
+                        v-model="formData.formattedAmount"
+                        placeholder="0.00"
+                        required
+                        class="input-field"
+                      />
+                      <span class="calculator-btn-wrapper">
+                        <button type="button" class="calculator-btn px-4" @click="openCalculator">
+                          🖩
+                        </button>
+                      </span>
+                    </div>
+                  </label>
+
+                  <label>
+                    <span>Actor</span>
+                    <select v-model="selectedActor" class="input-field">
+                      <option value="" disabled>Select actor</option>
+                      <option
+                        v-for="member in members"
+                        :key="member.id"
+                        :value="member.name"
+                      >
+                        {{ member.name }}
+                      </option>
+                      <option value="other">Other (type manually)</option>
+                    </select>
+                  </label>
+
+                  <label v-if="selectedActor === 'other'">
+                    <span>Custom actor</span>
+                    <input
+                      type="text"
+                      v-model="manualActor"
+                      placeholder="Enter actor name"
+                      class="input-field"
+                    />
+                  </label>
+
+                  <label>
+                    <span>Date &amp; time</span>
+                    <input
+                      type="datetime-local"
+                      v-model="formData.transaction_time"
+                      required
+                      class="input-field"
+                      step="1"
+                    />
+                  </label>
+                </div>
+
+                <div class="form-actions">
+                  <button type="button" class="btn-secondary" @click="closeModal">
+                    Cancel
+                  </button>
+                  <button type="submit" class="btn-primary">
+                    <span v-if="isLoading" class="spinner"></span>
+                    <span v-else>{{ isEditing ? "Update" : "Create" }}</span>
+                  </button>
+                </div>
               </form>
             </div>
           </Transition>
@@ -289,7 +290,6 @@
       </Transition>
     </Teleport>
 
-    <!-- Calculator Modal -->
     <Teleport to="body">
       <Transition name="modal-fade">
         <div
@@ -366,14 +366,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick, computed } from "vue";
+import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from "vue";
 import api from "../services/api";
 import { useAppStore } from "../stores/app";
 import { storeToRefs } from "pinia";
+import PageHeader from "../components/layout/PageHeader.vue";
+import BaseCard from "../components/layout/BaseCard.vue";
+import StatCard from "../components/layout/StatCard.vue";
 
 const appStore = useAppStore();
-const { appLoading, isCollapsed, currentGroup, userGroups } =
-  storeToRefs(appStore);
+const { currentGroup } = storeToRefs(appStore);
 
 const transactions = ref([]);
 const categories = ref([]);
@@ -391,10 +393,10 @@ const rawExpression = ref("");
 const isEditing = ref(false);
 const isLoading = ref(false);
 const isLoadingData = ref(true);
-const members = ref([]); // Store fetched members
-const selectedActor = ref(""); // Store selected actor
-const manualActor = ref(""); // Store manually entered actor
-const transactionsMeta = ref({});
+const members = ref([]);
+const selectedActor = ref("");
+const manualActor = ref("");
+const transactionsMeta = ref({ current_page: 1, last_page: 1 });
 const currency = ref("Rp");
 const fileInput = ref(null);
 const focused = ref(false);
@@ -402,65 +404,238 @@ const showPageInput = ref(false);
 const jumpPageInput = ref("");
 
 const calculatorValue = computed(() => formatExpression(rawExpression.value));
+const filteredCategories = computed(() =>
+  categories.value.filter((category) => {
+    if (!selectedType.value) {
+      return true;
+    }
+    return category.type === selectedType.value;
+  })
+);
 
 const formData = ref({
   type: "expense",
-  category_id: categories.value[0]?.id,
-  group_id: currentGroup.value.id,
+  category_id: null,
+  group_id: null,
   amount: "",
   formattedAmount: "",
   description: "",
   actor: "",
-  transaction_time: new Date(
-    new Date().getTime() - new Date().getTimezoneOffset() * 60000
-  )
-    .toISOString()
-    .slice(0, 16),
+  transaction_time: "",
   proof: null,
 });
 
 const paginationPages = computed(() => {
-  const totalPages = transactionsMeta.value.last_page;
-  const current = parseInt(transactionsMeta.value.current_page);
+  const totalPages = transactionsMeta.value.last_page ?? 1;
+  const current = parseInt(transactionsMeta.value.current_page ?? 1, 10);
 
   if (totalPages <= 5) {
     return Array.from({ length: totalPages }, (_, i) => i + 1);
   }
 
-  const pages = [];
+  const pages = [1];
 
-  // Always show the first page
-  pages.push(1);
-
-  // Add "..." if current page is far from the start
-  if (current > 3) pages.push('prev-ellipsis');
-
-  const middlePages = [];
+  if (current > 3) pages.push("prev-ellipsis");
 
   for (let i = current - 1; i <= current + 1; i++) {
     if (i > 1 && i < totalPages) {
-      middlePages.push(i);
+      pages.push(i);
     }
   }
 
-  pages.push(...middlePages);
+  if (current < totalPages - 2) pages.push("next-ellipsis");
 
-  // Add "..." if current page is far from the end
-  if (current < totalPages - 2) pages.push('next-ellipsis');
-
-  // Always show the last page
   if (totalPages !== 1) pages.push(totalPages);
 
   return pages;
 });
 
-const handleJumpPage = () => {
-  const p = parseInt(jumpPageInput.value);
-  if (p >= 1 && p <= transactionsMeta.value.last_page) {
-    page.value = p;
+const formatAmount = (amount) =>
+  new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+    useGrouping: true,
+  }).format(Number(amount ?? 0));
+
+const applyCurrencyMask = (value) =>
+  formatAmount(Number(value?.toString().replace(/[^\d.-]/g, "")));
+
+const resetForm = () => {
+  formData.value = {
+    type: "expense",
+    category_id: categories.value[0]?.id ?? null,
+    group_id: currentGroup.value?.id ?? null,
+    amount: "",
+    formattedAmount: "",
+    description: "",
+    actor: "",
+    transaction_time: new Date(
+      Date.now() - new Date().getTimezoneOffset() * 60000
+    )
+      .toISOString()
+      .slice(0, 16),
+    proof: null,
+  };
+  selectedActor.value = "";
+  manualActor.value = "";
+};
+
+const fetchTransactions = async () => {
+  if (!currentGroup.value) return;
+  isLoadingData.value = true;
+
+  try {
+    const response = await api.get("/transactions", {
+      params: {
+        group_id: currentGroup.value.id,
+        page: page.value,
+        type: selectedType.value || undefined,
+        category_id: selectedCategory.value || undefined,
+        date: selectedMonth.value || undefined,
+      },
+    });
+
+    const payload = response.data.transactions;
+    transactions.value = payload?.data ?? payload ?? [];
+    transactionsMeta.value = payload ?? { current_page: 1, last_page: 1 };
+    totalIncome.value = response.data.total_income ?? 0;
+    totalExpense.value = response.data.total_expense ?? 0;
+    totalSavings.value = response.data.total_savings ?? 0;
+  } catch (error) {
+    console.error("Error fetching transactions:", error);
+  } finally {
+    isLoadingData.value = false;
+  }
+};
+
+const fetchCategories = async () => {
+  if (!currentGroup.value) return;
+
+  try {
+    const response = await api.get("/categories", {
+      params: { group_id: currentGroup.value.id },
+    });
+    categories.value = response.data ?? [];
+    if (!formData.value.category_id) {
+      formData.value.category_id = categories.value[0]?.id ?? null;
+    }
+  } catch (error) {
+    console.error("Failed to fetch categories", error);
+  }
+};
+
+const fetchMembers = async () => {
+  if (!currentGroup.value) return;
+  try {
+    const response = await api.get(
+      `/groups/${currentGroup.value.id}/members`
+    );
+    members.value = response.data.data ?? response.data ?? [];
+  } catch (error) {
+    console.error("Failed to fetch members", error);
+  }
+};
+
+const openModal = () => {
+  isEditing.value = false;
+  resetForm();
+  showTransactionModal.value = true;
+};
+
+const closeModal = () => {
+  showTransactionModal.value = false;
+  resetForm();
+};
+
+const saveTransaction = async () => {
+  if (!currentGroup.value) return;
+  isLoading.value = true;
+
+  try {
+    formData.value.group_id = currentGroup.value.id;
+    formData.value.actor =
+      selectedActor.value === "other" ? manualActor.value : selectedActor.value;
+
+    const payload = new FormData();
+    Object.entries(formData.value).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        payload.append(key, value);
+      }
+    });
+
+    if (isEditing.value) {
+      await api.put(`/transactions/${formData.value.id}`, payload);
+    } else {
+      await api.post("/transactions", payload);
+    }
+
+    closeModal();
     fetchTransactions();
-    showPageInput.value = false;
-    jumpPageInput.value = '';
+  } catch (error) {
+    console.error("Failed to save transaction", error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const editTransaction = (transaction) => {
+  isEditing.value = true;
+  showTransactionModal.value = true;
+  formData.value = {
+    id: transaction.id,
+    type: transaction.type,
+    category_id: transaction.category.id,
+    group_id: currentGroup.value?.id ?? null,
+    amount: transaction.amount.toString(),
+    formattedAmount: formatAmount(transaction.amount),
+    description: transaction.description || "",
+    actor: transaction.actor || "",
+    transaction_time: transaction.transaction_time,
+    proof: transaction.proof || null,
+  };
+
+  const memberExists = members.value.some(
+    (member) => member.name === transaction.actor
+  );
+  if (memberExists) {
+    selectedActor.value = transaction.actor;
+    manualActor.value = "";
+  } else if (transaction.actor) {
+    selectedActor.value = "other";
+    manualActor.value = transaction.actor;
+  } else {
+    selectedActor.value = "";
+    manualActor.value = "";
+  }
+};
+
+const deleteTransaction = async (id) => {
+  if (!confirm("Delete this transaction?")) return;
+
+  try {
+    await api.delete(`/transactions/${id}`, {
+      data: { group_id: currentGroup.value.id },
+    });
+    fetchTransactions();
+  } catch (error) {
+    console.error("Failed to delete transaction", error);
+  }
+};
+
+const prevPage = () => {
+  if (page.value > 1) {
+    page.value--;
+    fetchTransactions();
+  }
+};
+
+const nextPage = () => {
+  if (
+    transactionsMeta.value.current_page <
+    transactionsMeta.value.last_page
+  ) {
+    page.value++;
+    fetchTransactions();
   }
 };
 
@@ -469,15 +644,27 @@ const goToPage = (p) => {
   fetchTransactions();
 };
 
+const handleJumpPage = () => {
+  const target = parseInt(jumpPageInput.value, 10);
+  if (
+    target >= 1 &&
+    target <= (transactionsMeta.value.last_page ?? 1)
+  ) {
+    page.value = target;
+    fetchTransactions();
+    showPageInput.value = false;
+  }
+};
+
 const exportTransactions = async () => {
+  if (!currentGroup.value) return;
   isLoadingData.value = true;
 
   try {
     const response = await api.get("/transactions/export", {
       params: { group_id: currentGroup.value.id },
-      responseType: "blob", // Important for downloading files
+      responseType: "blob",
     });
-
     const blob = new Blob([response.data], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
@@ -500,7 +687,6 @@ const downloadTemplate = async () => {
     const response = await api.get("/transactions/template", {
       responseType: "blob",
     });
-
     const blob = new Blob([response.data], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
@@ -517,102 +703,43 @@ const downloadTemplate = async () => {
 };
 
 const importTransactions = async (event) => {
-  const file = event.target.files[0];
+  if (!currentGroup.value) return;
+  const file = event.target.files?.[0];
   if (!file) return;
 
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("group_id", currentGroup.value.id);
+  const payload = new FormData();
+  payload.append("file", file);
+  payload.append("group_id", currentGroup.value.id);
 
   isLoadingData.value = true;
 
   try {
-    await api.post(
-      "/transactions/import?cache=" + new Date().getTime(),
-      formData,
-      {
-        headers: { "Content-Type": "multipart/form-data" },
-      }
-    );
-    alert("Transactions imported successfully!");
+    await api.post("/transactions/import", payload);
     fetchTransactions();
   } catch (error) {
     console.error("Failed to import transactions", error);
   } finally {
-    event.target.value = null;
-    fileInput.value = null;
     isLoadingData.value = false;
+    if (fileInput.value) {
+      fileInput.value.value = "";
+    }
   }
 };
 
-const formatAmount = (amount) => {
-  return Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-    useGrouping: true,
-  }).format(amount);
-};
-
-const fetchMembers = async () => {
-  try {
-    if (!currentGroup.value) return;
-
-    const response = await api.get(`/groups/${currentGroup.value.id}/members`);
-
-    members.value = response.data.data; // Store members in reactive state
-  } catch (error) {
-    console.error("Failed to fetch members", error);
-  }
-};
-
-const openModal = async () => {
-  isEditing.value = false;
-  showTransactionModal.value = true;
-};
-
-const closeModal = () => {
-  showTransactionModal.value = false;
-  resetForm();
-};
-
-const openCalculator = async () => {
+const openCalculator = () => {
   showCalculator.value = true;
-  // rawExpression.value = "";
-
-  await nextTick();
-  calculatorInput.value?.focus();
+  nextTick(() => {
+    calculatorInput.value?.focus();
+  });
 };
 
 const closeCalculator = () => {
   showCalculator.value = false;
+  rawExpression.value = "";
 };
 
-const handleKeydown = (event) => {
-  const { key } = event;
-  if (key === "Enter" || key === "=") {
-    insertCalculatorValue();
-  } else if (key === "Backspace") {
-    deleteLastDigit();
-  } else if (key === "Escape") {
-    closeCalculator();
-  } else if (/[0-9.+\-*/]/.test(key)) {
-    appendToCalculator(key);
-  }
-};
-
-const appendToCalculator = (value) => {
-  const lastChar = rawExpression.value.slice(-1);
-
-  // Prevent two decimals in a number
-  if (value === "." && /\d*\.\d*$/.test(rawExpression.value)) return;
-
-  // Prevent operator chaining
-  if (isOperator(value) && isOperator(lastChar)) {
-    rawExpression.value = rawExpression.value.slice(0, -1) + value;
-    return;
-  }
-
-  rawExpression.value += value;
+const appendToCalculator = (char) => {
+  rawExpression.value += char;
 };
 
 const deleteLastDigit = () => {
@@ -623,202 +750,58 @@ const clearCalculator = () => {
   rawExpression.value = "";
 };
 
-const formatExpression = (expr) => {
-  // Split expression into numbers and operators
-  return expr
-    .split(/([+\-*/])/)
-    .map((part) => {
-      if (!isNaN(part) && part !== "") {
-        return Number(part).toLocaleString();
-      } else {
-        return part;
-      }
-    })
-    .join(" ");
+const evaluateExpression = (expression) => {
+  try {
+    return Function(`"use strict"; return (${expression})`)().toString();
+  } catch (error) {
+    console.error("Invalid expression", error);
+    return "";
+  }
 };
 
-const isOperator = (char) => ["+", "-", "*", "/"].includes(char);
-
 const calculateResult = () => {
-  try {
-    const cleaned = rawExpression.value.replace(/,/g, "");
-    const result = Function(`return (${cleaned})`)();
-    rawExpression.value = result.toString();
-  } catch (error) {
-    console.error("Invalid calculation");
-  }
+  const sanitized = formatExpression(rawExpression.value);
+  rawExpression.value = evaluateExpression(sanitized);
 };
 
 const insertCalculatorValue = () => {
   if (!rawExpression.value) return;
-
-  calculateResult();
-
-  const result = Number(rawExpression.value);
-  formData.value.formattedAmount = formatAmount(result);
-  formData.value.amount = result.toString();
+  formData.value.formattedAmount = applyCurrencyMask(rawExpression.value);
+  formData.value.amount = formData.value.formattedAmount.replace(/[^0-9.]/g, "");
   closeCalculator();
 };
 
-const resetForm = () => {
-  formData.value = {
-    type: "expense",
-    category_id: categories.value[0]?.id,
-    group_id: currentGroup.value.id,
-    amount: "",
-    formattedAmount: "",
-    description: "",
-    actor: "",
-    transaction_time: new Date(
-      new Date().getTime() - new Date().getTimezoneOffset() * 60000
-    )
-      .toISOString()
-      .slice(0, 16),
-    proof: null,
-  };
-};
-
-const fetchTransactions = async () => {
-  isLoadingData.value = true;
-
-  try {
-    if (!currentGroup.value) return;
-
-    const response = await api.get("/transactions", {
-      params: {
-        date: selectedMonth.value,
-        group_id: currentGroup.value.id,
-        category_id: selectedCategory.value,
-        type: selectedType.value,
-        page: page.value,
-      },
-    });
-
-    transactions.value = response.data.transactions.data;
-    transactionsMeta.value = response.data.transactions;
-    totalIncome.value = response.data.total_income ?? 0;
-    totalExpense.value = response.data.total_expense ?? 0;
-    totalSavings.value = response.data.total_savings ?? 0;
-  } catch (error) {
-    console.error("Failed to fetch transactions", error);
-  } finally {
-    isLoadingData.value = false;
+const handleKeydown = (event) => {
+  const allowed = "0123456789+-*/.";
+  if (allowed.includes(event.key)) {
+    appendToCalculator(event.key);
+    event.preventDefault();
   }
 };
 
-const changePage = (url) => {
-  const urlObj = new URL(url);
-  page.value = urlObj.searchParams.get("page");
-  fetchTransactions();
+const formatExpression = (value) => value.replace(/[^0-9+\-*/.]/g, "");
+
+const syncBodyScrollLock = () => {
+  if (typeof document === "undefined") return;
+  const shouldLock = showTransactionModal.value || showCalculator.value;
+  document.body.classList.toggle("modal-open", shouldLock);
 };
 
-const fetchCategories = async () => {
-  if (!currentGroup.value) return;
+watch([showTransactionModal, showCalculator], syncBodyScrollLock, {
+  immediate: true,
+});
 
-  try {
-    const response = await api.get("/categories", {
-      params: {
-        group_id: currentGroup.value.id,
-      },
-    });
-    categories.value = response.data;
-  } catch (error) {
-    console.error("Failed to fetch categories", error);
+onBeforeUnmount(() => {
+  if (typeof document !== "undefined") {
+    document.body.classList.remove("modal-open");
   }
-};
-
-const saveTransaction = async () => {
-  isLoading.value = true;
-
-  try {
-    formData.value.actor =
-      selectedActor.value === "other" ? manualActor.value : selectedActor.value;
-
-    const formDataObj = new FormData();
-    Object.keys(formData.value).forEach((key) => {
-      if (formData.value[key] !== null) {
-        formDataObj.append(key, formData.value[key]);
-      }
-    });
-
-    if (isEditing.value) {
-      await api.put(`/transactions/${formData.value.id}`, formDataObj);
-    } else {
-      await api.post("/transactions", formDataObj);
-    }
-
-    closeModal();
-    fetchTransactions();
-  } catch (error) {
-    console.error("Failed to save transaction", error);
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-const editTransaction = (transaction) => {
-  isEditing.value = true;
-  showTransactionModal.value = true;
-
-  // Set formData with transaction details
-  formData.value = {
-    id: transaction.id,
-    type: transaction.type,
-    category_id: transaction.category.id,
-    group_id: currentGroup.value.id,
-    amount: transaction.amount.toString(), // Store clean numeric value
-    formattedAmount: formatAmount(transaction.amount), // Store formatted amount
-    description: transaction.description || "",
-    transaction_time: transaction.transaction_time,
-    proof: transaction.proof || null,
-  };
-
-  // Handle actor selection logic
-  const memberExists = members.value.some(
-    (member) => member.name === transaction.actor
-  );
-
-  if (memberExists) {
-    selectedActor.value = transaction.actor; // Select actor from the dropdown
-    manualActor.value = ""; // Clear manual actor
-  } else {
-    selectedActor.value = "other"; // Mark as manual input
-    manualActor.value = transaction.actor; // Pre-fill manual input field
-  }
-};
-
-const deleteTransaction = async (id) => {
-  if (confirm("Are you sure you want to delete this transaction?")) {
-    await api.delete(`/transactions/${id}`, {
-      data: {
-        group_id: currentGroup.value.id,
-      },
-    });
-    fetchTransactions();
-  }
-};
-
-const prevPage = () => {
-  if (page.value > 1) {
-    page.value--;
-    fetchTransactions();
-  }
-};
-
-const nextPage = () => {
-  page.value++;
-  fetchTransactions();
-};
+});
 
 watch(
   () => formData.value.formattedAmount,
-  async (newVal) => {
+  (newVal) => {
     if (!newVal) return;
-
-    formData.value.formattedAmount = formatAmount(
-      Number(newVal.replace(/[^\d.-]/g, ""))
-    );
-
+    formData.value.formattedAmount = applyCurrencyMask(newVal);
     formData.value.amount = formData.value.formattedAmount.replace(
       /[^0-9.]/g,
       ""
@@ -826,137 +809,225 @@ watch(
   }
 );
 
-watch(currentGroup, async () => {
-  await fetchCategories();
-  await fetchTransactions();
-  await fetchMembers();
-  resetForm();
-});
+watch(
+  () => currentGroup.value,
+  async (group) => {
+    if (!group) return;
+    resetForm();
+    await Promise.all([fetchCategories(), fetchTransactions(), fetchMembers()]);
+  }
+);
 
 onMounted(async () => {
-  await fetchTransactions();
-  await fetchCategories();
-  await fetchMembers();
+  await Promise.all([fetchCategories(), fetchTransactions(), fetchMembers()]);
   resetForm();
 });
 </script>
 
 <style scoped>
-.transactions-container {
-  padding: calc(20px * var(--scale-factor, 1));
-  color: white;
-  font-size: calc(16px * var(--scale-factor, 1));
-  margin-left: calc(80px * var(--scale-factor, 1));
+.transactions-page .page-subtitle {
+  color: #94a3b8;
+  margin-top: 8px;
 }
-.transactions-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: calc(20px * var(--scale-factor, 1));
-  font-size: calc(24px * var(--scale-factor, 1));
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
 }
-.summary-cards {
+
+.filters-panel {
   display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.filters-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #cbd5f5;
+  font-size: 0.9rem;
+}
+
+.filters-grid input,
+.filters-grid select {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 12px;
+  padding: 12px;
+  color: #f8fafc;
+}
+
+.filters-actions {
+  display: flex;
+  gap: 12px;
   flex-wrap: wrap;
-  gap: calc(10px * var(--scale-factor, 1));
-  justify-content: space-between;
-  margin-bottom: calc(20px * var(--scale-factor, 1));
 }
 
-.summary-item {
-  flex: 1;
-  padding: calc(8px * var(--scale-factor, 1));
-  border-radius: calc(8px * var(--scale-factor, 1));
-  text-align: center;
-  font-size: calc(14px * var(--scale-factor, 1));
+.btn-outline {
+  background: transparent;
+  border: 1px solid rgba(248, 250, 252, 0.35);
+  color: #f8fafc;
+  padding: 10px 18px;
+  border-radius: 999px;
+  cursor: pointer;
 }
 
-.summary-item.income {
-  background: #22c55e;
+.table-card {
+  padding: 0;
 }
 
-.summary-item.expense {
-  background: #ef4444;
+.table-card .section-label {
+  padding: 24px 24px 0;
 }
 
-.summary-item.savings {
-  background: #007bd3;
+.table-scroll {
+  overflow-x: auto;
+  padding: 24px;
 }
 
-.summary-item .label {
-  font-weight: bold;
-}
-
-.summary-item .value {
-  margin-top: 5px;
-  display: block;
-}
-.text-green {
-  color: #22c55e;
-}
-.text-red {
-  color: #ef4444;
-}
-.text-gold {
-  color: #eab308;
-}
-.filter-input {
-  width: 10rem;
-  padding: 10px;
-  border-radius: 6px;
-  border: none;
-  margin-right: 10px;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  font-size: calc(14px * var(--scale-factor, 1));
-}
-.transactions-list table {
+.responsive-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
-  font-size: calc(12px * var(--scale-factor, 1));
+  color: #f8fafc;
 }
-.transactions-list th,
-.transactions-list td {
-  padding: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-.transactions-list th {
+
+.responsive-table th,
+.responsive-table td {
   text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
 }
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ghost-btn {
+  background: rgba(148, 163, 184, 0.15);
+  border: none;
+  border-radius: 999px;
+  color: #f8fafc;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.ghost-btn.danger {
+  color: #fb7185;
+}
+
+.text-green {
+  color: #34d399;
+}
+
+.text-red {
+  color: #fb7185;
+}
+
 .pagination {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
-  margin-top: 20px;
-  max-width: 100%;
+  align-items: center;
 }
 
 .pagination button {
-  padding: 6px 12px;
-  flex-shrink: 0;
-  min-width: 40px;
-  border: 1px solid #eab308;
   background: transparent;
-  color: #eab308;
-  border-radius: 5px;
+  border: 1px solid rgba(248, 250, 252, 0.3);
+  color: #f8fafc;
+  border-radius: 10px;
+  padding: 8px 14px;
   cursor: pointer;
-  font-size: calc(14px * var(--scale-factor, 1));
 }
 
-.pagination button.active-page {
-  background: #eab308;
-  color: black;
-  font-weight: bold;
+.pagination .active-page {
+  background: #fbbf24;
+  color: #0f172a;
+  border-color: #fbbf24;
 }
 
 .pagination-ellipsis {
-  background: transparent;
   border: none;
-  cursor: pointer;
-  color: #ccc;
-  font-size: 18px;
+  background: transparent;
+  color: #cbd5f5;
+}
+
+.empty-table {
+  padding: 32px;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.jump-page-modal {
+  display: flex;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.modal-content--wide {
+  max-width: min(860px, 95vw);
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.modal-head h2 {
+  margin: 6px 0;
+  color: #f8fafc;
+}
+
+.modal-subtitle {
+  color: #94a3b8;
+  margin: 0;
+}
+
+.transaction-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #cbd5f5;
+  font-size: 0.9rem;
+}
+
+.form-span {
+  grid-column: span 2;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .input-field {
@@ -964,197 +1035,52 @@ onMounted(async () => {
   padding: 12px;
   background: rgba(255, 255, 255, 0.915);
   border: 1px solid #eab308;
-  border-radius: 8px;
-  color: rgb(70, 70, 70);
-  font-size: 16px;
-  outline: none;
-  transition: border-color 0.2s ease-in-out;
-}
-.input-field:focus {
-  border-color: #facc15 !important;
-}
-.border-red-500 {
-  border-color: red !important;
-}
-.form-required:invalid {
-  border-color: red !important;
-}
-
-.form-required:invalid:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.5);
-}
-/* .input-group {
-  display: flex;
-  align-items: center;
-  transition: border-color 0.2s ease-in-out;
-}
-.input-group > *:not(:last-child) {
-  margin-right: 20px;
-}
-.input-group > *:last-child {
-  margin-left: auto;
-} */
-
-.input-group {
-  display: flex;
-  gap: 10px;
-}
-.calculator-btn {
-  width: 100%;
-  border: 1px solid #eab308;
-  border-radius: 8px;
-  color: rgb(70, 70, 70);
-  font-size: 16px;
-  outline: none;
-  transition: border-color 0.2s ease-in-out;
-  background: #eab308;
-  cursor: pointer;
-  font-size: 32px;
-}
-.calculator-modal {
-  width: 300px;
-  text-align: center;
-}
-.calculator-buttons {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 5px;
-}
-.calculator-buttons button {
-  padding: 10px;
-  border-radius: 5px;
-  cursor: pointer;
+  border-radius: 12px;
+  color: #1e293b;
+  font-size: 1rem;
 }
 
 .calculator-content {
-  background: rgba(255, 255, 255);
-  border-radius: 15px;
-  padding: 20px;
-  box-shadow: 0 8px 24px rgba(255, 215, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  width: 380px;
-  text-align: center;
-  overflow: hidden;
-  transition: height 0.3s ease-in-out;
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: 24px;
+  padding: 32px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #f8fafc;
 }
 
-.calculator-content .calculator-display {
+.calculator-display {
   height: 3rem;
   font-size: 32px;
   border: 1px solid #eab308;
   border-radius: 8px;
+  margin-bottom: 16px;
 }
 
-.filters-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  gap: 10px;
+.calculator-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(60px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
 }
 
-.filters {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 2px;
-}
-
-.export-buttons {
-  display: flex;
-  gap: 10px;
-}
-
-.btn-export,
-.btn-template,
-.btn-import {
-  text-align: center;
-  padding: 8px 12px;
-  font-size: 14px;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: none;
-  border-radius: 5px;
+.calculator-buttons button {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(248, 250, 252, 0.05);
+  color: #f8fafc;
+  font-size: 1rem;
   cursor: pointer;
 }
 
-.btn-import input {
-  display: none;
-}
-
-.btn-export:hover,
-.btn-template:hover,
-.btn-import:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* Responsive Table */
-.responsive-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: calc(14px * var(--scale-factor, 1));
-}
-.responsive-table th,
-.responsive-table td {
-  padding: calc(10px * var(--scale-factor, 1));
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Mobile Adjustments */
 @media (max-width: 768px) {
-  :root {
-    --scale-factor: 0.8;
+  .form-span {
+    grid-column: span 1;
   }
-  .transactions-header {
+
+  .filters-actions {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-  .summary-cards {
-    flex-direction: column;
-  }
-  .responsive-table {
-    font-size: 12px;
-  }
-  .filters-container {
-    flex-direction: column; /* Stack items vertically */
-    align-items: stretch; /* Stretch to full width */
-  }
-
-  .filters,
-  .export-buttons {
-    width: 100%; /* Make them take full width */
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 10px;
-  }
-
-  .filter-input,
-  .btn-export,
-  .btn-template,
-  .btn-import {
-    width: 100%; /* Ensure full width on mobile */
-  }
-
-  .pagination {
-    width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  :root {
-    --scale-factor: 0.7;
-  }
-  .transactions-container {
-    padding: 10px;
-  }
-  .summary-item {
-    font-size: 12px;
-  }
-  .pagination {
-    width: 100%;
+    align-items: stretch;
   }
 }
 </style>

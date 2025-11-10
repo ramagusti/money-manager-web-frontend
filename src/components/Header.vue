@@ -18,13 +18,13 @@
       <!-- Navigation -->
       <nav :class="{ 'nav-open': menuOpen }">
         <template v-if="authStore.isAuthenticated">
-          <button @click="authStore.logout" class="btn-header">Logout</button>
+          <button @click="authStore.logout" class="btn-secondary">Logout</button>
         </template>
         <template v-else>
-          <button @click="router.push('/login')" class="btn-header">
+          <button @click="router.push('/login')" class="btn-outline header-btn">
             Login
           </button>
-          <button @click="router.push('/signup')" class="btn-primary">
+          <button @click="router.push('/signup')" class="btn-primary header-btn">
             Sign Up
           </button>
         </template>
@@ -82,30 +82,8 @@ nav {
 }
 
 /* Buttons */
-.btn-header {
-  background: black;
-  color: #eab308;
-  border: 1px solid #eab308;
-  padding: 10px 14px;
-  border-radius: 8px;
-  transition: 0.3s;
-  font-size: calc(16px * var(--scale-factor));
-}
-
-.btn-header:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.btn-primary {
-  background: #eab308;
-  color: black;
-  padding: 10px 14px;
-  border-radius: 8px;
-  transition: 0.3s;
-}
-
-.btn-primary:hover {
-  background: #facc15;
+.header-btn {
+  min-width: 110px;
 }
 
 /* Mobile Menu */
@@ -140,8 +118,10 @@ nav {
     display: flex;
   }
 
-  .btn-header,
-  .btn-primary {
+  .header-btn,
+  .btn-outline,
+  .btn-primary,
+  .btn-secondary {
     width: 100%;
     text-align: center;
   }

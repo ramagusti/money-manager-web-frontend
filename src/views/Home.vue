@@ -6,6 +6,10 @@
       <Hero />
 
       <section class="metrics-section">
+        <header>
+          <p class="eyebrow">Proof in the numbers</p>
+          <h2>Teams trust PiggyBang to stay ready for every investor call.</h2>
+        </header>
         <div class="metrics-grid">
           <article v-for="metric in metrics" :key="metric.label" class="metric-card">
             <p class="metric-value">{{ metric.value }}</p>
@@ -117,12 +121,12 @@ const scrollToFeatures = () => {
 }
 
 .home-body {
-  max-width: 1200px;
+  width: min(1240px, 94vw);
   margin: 0 auto;
-  padding: 120px 24px 80px;
+  padding: 140px 10px;
   display: flex;
   flex-direction: column;
-  gap: 72px;
+  gap: clamp(48px, 8vw, 96px);
   background-color: transparent;
 }
 
@@ -156,7 +160,7 @@ const scrollToFeatures = () => {
 .metric-card {
   border: 1px solid rgba(148, 163, 184, 0.3);
   border-radius: 16px;
-  padding: 24px;
+  padding: clamp(20px, 3vw, 28px);
   background: rgba(15, 23, 42, 0.35);
   box-shadow: 0 20px 45px rgba(2, 6, 23, 0.5);
 }
@@ -182,12 +186,16 @@ const scrollToFeatures = () => {
 .product-strip {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 32px;
+  gap: clamp(20px, 4vw, 32px);
   align-items: center;
-  padding: 32px;
+  padding: clamp(24px, 4vw, 36px);
   border-radius: 28px;
   border: 1px solid rgba(148, 163, 184, 0.25);
-  background: linear-gradient(130deg, rgba(15, 23, 42, 0.9), rgba(30, 64, 175, 0.4));
+  background: linear-gradient(
+    130deg,
+    rgba(15, 23, 42, 0.9),
+    rgba(30, 64, 175, 0.4)
+  );
 }
 
 .product-strip ul {
@@ -278,10 +286,10 @@ const scrollToFeatures = () => {
 .cta-panel {
   border: 1px solid rgba(148, 163, 184, 0.25);
   border-radius: 28px;
-  padding: 40px;
+  padding: clamp(28px, 5vw, 48px);
   display: flex;
   flex-wrap: wrap;
-  gap: 28px;
+  gap: clamp(16px, 4vw, 32px);
   align-items: center;
   background: rgba(15, 23, 42, 0.55);
 }
@@ -297,41 +305,7 @@ const scrollToFeatures = () => {
   flex-wrap: wrap;
 }
 
-.btn-primary,
-.btn-outline {
-  border-radius: 999px;
-  padding: 14px 32px;
-  font-weight: 600;
-  font-size: 1rem;
-  border: none;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.btn-primary {
-  background: linear-gradient(120deg, #fbbf24, #f97316);
-  color: #0f172a;
-  box-shadow: 0 15px 30px rgba(249, 115, 22, 0.35);
-  text-decoration: none;
-}
-
-.btn-outline {
-  background: transparent;
-  color: #f8fafc;
-  border: 1px solid rgba(248, 250, 252, 0.35);
-}
-
-.btn-primary:hover,
-.btn-outline:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.35);
-}
-
 @media (max-width: 768px) {
-  .home-body {
-    padding: 100px 16px 60px;
-  }
-
   .cta-panel {
     padding: 32px 24px;
   }
