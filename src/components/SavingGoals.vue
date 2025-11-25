@@ -5,7 +5,7 @@
     <div v-if="goal === 0" class="no-goal">
       <p class="mb-2">The group does not have a monthly goal yet.</p>
       <button class="btn-primary m-auto mb-8" @click="$emit('openGoalModal')">
-        ➕ Set a Monthly Goal
+        Set a Monthly Goal
       </button>
     </div>
 
@@ -57,7 +57,7 @@
       </div>
       
       <button class="btn-primary m-auto mt-2" @click="$emit('openGoalModal')">
-        🔄️ Modify Monthly Goal
+        Modify Monthly Goal
       </button>
     </div>
   </div>

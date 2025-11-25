@@ -13,7 +13,7 @@
               <template v-if="isSubmitted">
                 <div key="success">
                   <h2 class="text-3xl font-semibold text-gold mb-4">
-                    You're Almost There! 🎉
+                    You're Almost There!
                   </h2>
                   <p class="text-gray-300 text-sm">
                     Thank you for signing up! Please check your email for a

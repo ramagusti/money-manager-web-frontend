@@ -68,7 +68,10 @@
 
       <section class="detail-grid">
         <BaseCard>
-          <Summary :transactions="allTransactions" />
+          <Summary
+            :transactions="filteredTransactions"
+            :memberOverview="memberOverview"
+          />
         </BaseCard>
         <BaseCard>
           <MonthlySummary :transactions="filteredTransactions" />
@@ -228,6 +231,7 @@ const isLoadingData = ref(true);
 const balance = ref(0);
 const allTransactions = ref([]);
 const filteredTransactions = ref([]);
+const memberOverview = ref([]);
 const income = ref(0);
 const expenses = ref(0);
 const goal = ref(0);
@@ -456,6 +460,7 @@ const fetchDashboardData = async () => {
     balance.value = balanceResponse.data.balance;
     allTransactions.value = transactionsResponse.data.all_transactions;
     filteredTransactions.value = transactionsResponse.data.filtered_transactions;
+    memberOverview.value = transactionsResponse.data.member_overview || [];
     income.value = Number(incomeExpenseResponse.data.income);
     expenses.value = Number(incomeExpenseResponse.data.expense);
     goal.value = Number(goalResponse.data);

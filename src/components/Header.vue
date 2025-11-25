@@ -13,7 +13,11 @@
       </router-link>
 
       <!-- Mobile Menu Toggle -->
-      <button class="menu-toggle" @click="toggleMenu">☰</button>
+      <button class="menu-toggle" @click="toggleMenu" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" />
+        </svg>
+      </button>
 
       <!-- Navigation -->
       <nav :class="{ 'nav-open': menuOpen }">

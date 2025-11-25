@@ -17,7 +17,7 @@
               <template v-if="authStore.isAuthenticated">
                 <div key="success">
                   <h2 class="text-3xl font-semibold text-gold mb-4">
-                    Welcome, {{ authStore.user?.name }} 🎉
+                    Welcome, {{ authStore.user?.name }}
                   </h2>
                   <p class="text-gray-300 text-sm">
                     Redirecting to your dashboard...

@@ -1,6 +1,6 @@
 <template>
   <div class="transactions-card">
-    <h3><b>📉 Recent Transactions</b></h3>
+    <h3><b>Recent Transactions</b></h3>
     <ul>
       <li
         v-for="transaction in transactions.slice(0, 10)"

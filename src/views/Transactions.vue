@@ -41,13 +41,44 @@
 
     <BaseCard class="filters-panel">
       <div class="filters-grid">
-        <label>
-          <span>Month</span>
-          <input
-            type="month"
-            v-model="selectedMonth"
-            @change="fetchTransactions"
-          />
+        <label class="date-range-control">
+          <span>Date range</span>
+          <div class="range-picker" @click="toggleRangePicker">
+            <span class="range-picker__value">
+              {{ displayRange }}
+            </span>
+            <svg
+              class="range-picker__icon"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path d="M7 11l5 5 5-5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <div v-if="rangePickerOpen" class="range-picker__panel">
+            <div class="range-picker__grid">
+              <label>
+                <span>Start</span>
+                <input type="date" v-model="startDate" @change="validateRange" />
+              </label>
+              <label>
+                <span>End</span>
+                <input type="date" v-model="endDate" @change="validateRange" />
+              </label>
+            </div>
+            <div class="range-picker__actions">
+              <button class="btn-outline" type="button" @click="resetRange">
+                Reset
+              </button>
+              <button class="btn-primary" type="button" @click="applyRange">
+                Apply
+              </button>
+            </div>
+          </div>
         </label>
         <label>
           <span>Type</span>
@@ -231,7 +262,7 @@
                       />
                       <span class="calculator-btn-wrapper">
                         <button type="button" class="calculator-btn px-4" @click="openCalculator">
-                          🖩
+                          Calc
                         </button>
                       </span>
                     </div>
@@ -379,7 +410,15 @@ const { currentGroup } = storeToRefs(appStore);
 
 const transactions = ref([]);
 const categories = ref([]);
-const selectedMonth = ref(new Date().toISOString().slice(0, 7));
+const today = new Date();
+const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+const formatDate = (date) =>
+  new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 10);
+const startDate = ref(formatDate(startOfMonth));
+const endDate = ref(formatDate(today));
+const rangePickerOpen = ref(false);
 const selectedCategory = ref("");
 const selectedType = ref("");
 const page = ref(1);
@@ -412,6 +451,18 @@ const filteredCategories = computed(() =>
     return category.type === selectedType.value;
   })
 );
+
+const displayRange = computed(() => {
+  const start = new Date(startDate.value);
+  const end = new Date(endDate.value);
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  return `${formatter.format(start)} — ${formatter.format(end)}`;
+});
 
 const formData = ref({
   type: "expense",
@@ -480,6 +531,29 @@ const resetForm = () => {
   manualActor.value = "";
 };
 
+const validateRange = () => {
+  if (new Date(startDate.value) > new Date(endDate.value)) {
+    endDate.value = startDate.value;
+  }
+};
+
+const applyRange = () => {
+  validateRange();
+  rangePickerOpen.value = false;
+  page.value = 1;
+  fetchTransactions();
+};
+
+const resetRange = () => {
+  startDate.value = formatDate(startOfMonth);
+  endDate.value = formatDate(today);
+  applyRange();
+};
+
+const toggleRangePicker = () => {
+  rangePickerOpen.value = !rangePickerOpen.value;
+};
+
 const fetchTransactions = async () => {
   if (!currentGroup.value) return;
   isLoadingData.value = true;
@@ -491,7 +565,8 @@ const fetchTransactions = async () => {
         page: page.value,
         type: selectedType.value || undefined,
         category_id: selectedCategory.value || undefined,
-        date: selectedMonth.value || undefined,
+        start_date: startDate.value || undefined,
+        end_date: endDate.value || undefined,
       },
     });
 
@@ -848,6 +923,80 @@ onMounted(async () => {
   gap: 16px;
 }
 
+.date-range-control {
+  position: relative;
+}
+
+.range-picker {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.range-picker:hover {
+  border-color: #eab308;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.range-picker__value {
+  font-size: 0.95rem;
+}
+
+.range-picker__icon {
+  color: #eab308;
+}
+
+.range-picker__panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10;
+  margin-top: 8px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  width: min(420px, 92vw);
+}
+
+.range-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.range-picker__grid label span {
+  display: block;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+}
+
+.range-picker__grid input[type="date"] {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #f8fafc;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.range-picker__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
 .filters-grid label {
   display: flex;
   flex-direction: column;
@@ -869,15 +1018,6 @@ onMounted(async () => {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-}
-
-.btn-outline {
-  background: transparent;
-  border: 1px solid rgba(248, 250, 252, 0.35);
-  color: #f8fafc;
-  padding: 10px 18px;
-  border-radius: 999px;
-  cursor: pointer;
 }
 
 .table-card {

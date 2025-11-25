@@ -27,7 +27,10 @@
           class="mobile-nav-trigger"
           @click="mobileSidebarOpen = true"
         >
-          ☰ Menu
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" />
+          </svg>
+          Menu
         </button>
         <router-view />
       </div>

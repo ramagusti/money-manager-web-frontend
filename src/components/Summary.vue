@@ -1,7 +1,7 @@
 <template>
   <div class="summary-card">
     <h3>
-      <b>📊 Overall Summary</b>
+      <b>Member overview</b>
     </h3>
     <div v-if="summary.length">
       <div v-for="(item, index) in summary" :key="index" class="summary-user">
@@ -41,12 +41,53 @@ import { defineProps, computed } from "vue";
 const props = defineProps({
   transactions: {
     type: Array,
-    required: true,
+    default: () => [],
+  },
+  memberOverview: {
+    type: Array,
+    default: () => [],
   },
 });
 
-// Process transactions to group by user for the current month
+// Build per-actor totals for the group
 const summary = computed(() => {
+  if (props.memberOverview.length) {
+    const rows = props.memberOverview.map((member) => {
+      const income = Number(member.total_income ?? member.income ?? 0);
+      const expense = Number(member.total_expense ?? member.expense ?? 0);
+      const savings =
+        member.total_savings ??
+        member.savings ??
+        Number((income - expense).toFixed(2));
+
+      return {
+        actor: member.actor || "Unknown",
+        income,
+        expense,
+        savings,
+      };
+    });
+
+    const totals = rows.reduce(
+      (acc, row) => {
+        acc.income += row.income;
+        acc.expense += row.expense;
+        return acc;
+      },
+      { income: 0, expense: 0 }
+    );
+
+    return [
+      ...rows,
+      {
+        actor: "Total",
+        income: totals.income,
+        expense: totals.expense,
+        savings: totals.income - totals.expense,
+      },
+    ];
+  }
+
   const summaryData = {};
 
   props.transactions.forEach((transaction) => {
@@ -68,10 +109,29 @@ const summary = computed(() => {
   });
 
   // Convert the grouped summary into an array and calculate savings for each user
-  return Object.values(summaryData).map((item) => ({
+  const rows = Object.values(summaryData).map((item) => ({
     ...item,
     savings: item.income - item.expense,
   }));
+
+  const totals = rows.reduce(
+    (acc, row) => {
+      acc.income += row.income;
+      acc.expense += row.expense;
+      return acc;
+    },
+    { income: 0, expense: 0 }
+  );
+
+  return [
+    ...rows,
+    {
+      actor: "Total",
+      income: totals.income,
+      expense: totals.expense,
+      savings: totals.income - totals.expense,
+    },
+  ];
 });
 
 // Currency formatter using Indonesian Rupiah formatting

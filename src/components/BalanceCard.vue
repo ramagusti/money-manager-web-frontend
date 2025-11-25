@@ -1,7 +1,7 @@
 <template>
   <div class="balance-card">
     <!-- <h3>💰 Account Balance</h3> -->
-    <p class="balance-title">💰 Account Balance</p>
+    <p class="balance-title">Account Balance</p>
     <p class="balance">{{ formatCurrency(balance) }}</p>
   </div>
 </template>

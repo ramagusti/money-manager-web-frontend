@@ -14,7 +14,11 @@
       }"
     >
       <div class="sidebar__brand">
-        <button @click="toggleSidebar" class="sidebar__toggle">☰</button>
+        <button @click="toggleSidebar" class="sidebar__toggle" aria-label="Toggle navigation">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" />
+          </svg>
+        </button>
         <div class="sidebar__logo" v-if="!isCollapsed || isMobile">
           <img src="/images/PiggyBang.svg" alt="PiggyBang Logo" />
           <span>PiggyBang</span>
@@ -53,7 +57,11 @@
           :v-if="!link.requiresGroup || (userGroups?.length && currentGroup)"
           @click="closeMobileNav"
         >
-          <span class="nav-icon">{{ link.icon }}</span>
+          <span class="nav-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path :d="link.iconPath" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
           <span v-if="!isCollapsed || isMobile">{{ link.label }}</span>
         </router-link>
       </nav>
@@ -98,9 +106,24 @@ const isMobile = ref(window.innerWidth <= 768);
 const { isCollapsed, userGroups, currentGroup } = storeToRefs(appStore);
 
 const navigation = computed(() => [
-  { label: "Dashboard", to: "/dashboard", icon: "🏠", requiresGroup: false },
-  { label: "Transactions", to: "/transactions", icon: "💳", requiresGroup: true },
-  { label: "Settings", to: "/settings", icon: "⚙️", requiresGroup: true },
+  {
+    label: "Dashboard",
+    to: "/dashboard",
+    requiresGroup: false,
+    iconPath: "M3 9.75a.75.75 0 0 1 .38-.65l8-4.5a.75.75 0 0 1 .72 0l8 4.5a.75.75 0 0 1 .38.65V19a.75.75 0 0 1-.75.75H3.75A.75.75 0 0 1 3 19z",
+  },
+  {
+    label: "Transactions",
+    to: "/transactions",
+    requiresGroup: true,
+    iconPath: "M4.75 5A1.75 1.75 0 0 0 3 6.75v10.5A1.75 1.75 0 0 0 4.75 19h14.5A1.75 1.75 0 0 0 21 17.25V6.75A1.75 1.75 0 0 0 19.25 5zm0 1.5h14.5c.138 0 .25.112.25.25v2h-15v-2c0-.138.112-.25.25-.25zm-.25 4h15v6.75c0 .138-.112.25-.25.25H4.75a.25.25 0 0 1-.25-.25z",
+  },
+  {
+    label: "Settings",
+    to: "/settings",
+    requiresGroup: true,
+    iconPath: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.065 2.572c.94 1.544-.827 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.065-2.572c-.94-1.544.827-3.31 2.37-2.37.996.607 2.285.07 2.573-1.066zm1.675 3.433a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5z",
+  },
 ]);
 
 watch(currentGroup, async () => {

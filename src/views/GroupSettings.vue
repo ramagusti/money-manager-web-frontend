@@ -6,13 +6,13 @@
   <div class="group-settings-container">
     <!-- Header -->
     <div class="group-settings-header">
-      <h2 class="font-bold text-white">⚙️ Group Settings</h2>
+      <h2 class="font-bold text-white">Group Settings</h2>
       <button
         class="btn-primary"
         @click="showInviteModal = true"
         v-if="appStore.isAdmin"
       >
-        ➕ Invite Members
+        Invite Members
       </button>
     </div>
 
@@ -34,7 +34,7 @@
 
     <!-- Members List -->
     <div class="members-list">
-      <h3 class="section-title">👥 Group Members</h3>
+      <h3 class="section-title">Group Members</h3>
       <table class="responsive-table">
         <thead>
           <tr>
@@ -49,7 +49,7 @@
             <td>{{ member.name }}</td>
             <td>{{ member.email }}</td>
             <td>
-              <span v-if="member.role === 'owner'">👑 Owner {{ appStore.isOwner ? "(You)" : "" }}</span>
+              <span v-if="member.role === 'owner'">Owner {{ appStore.isOwner ? "(You)" : "" }}</span>
               <select
                 v-else
                 v-model="member.role"
@@ -73,7 +73,7 @@
                 v-if="member.role !== 'owner'"
                 class="btn-danger"
               >
-                ❌ Remove
+                Remove
               </button>
             </td>
           </tr>
@@ -83,7 +83,7 @@
     
     <!-- Pagination -->
     <div class="pagination">
-      <button v-if="page > 1" @click="prevPage">⬅ Previous</button>
+      <button v-if="page > 1" @click="prevPage">Previous</button>
 
       <span v-for="link in membersMeta.links" :key="link.label">
         <button
@@ -99,9 +99,7 @@
         </button>
       </span>
 
-      <button v-if="membersMeta.next_page_url" @click="nextPage">
-        Next ➡
-      </button>
+      <button v-if="membersMeta.next_page_url" @click="nextPage">Next</button>
     </div>
 
     <!-- Invite User Modal -->
@@ -219,9 +217,9 @@ const closeInviteModal = () => {
 const roleDisplay = (role) => {
   switch (role) {
     case "owner":
-      return "👑 Owner";
+      return "Owner";
     case "admin":
-      return "🔧 Admin";
+      return "Admin";
     case "member":
       return "👤 Member";
     default:

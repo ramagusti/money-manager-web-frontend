@@ -1,8 +1,14 @@
 <template>
   <div class="monthly-summary-card">
     <h3>
-      <b>📊 Monthly Summary ({{ currentMonthLabel }})</b>
+      <b>Monthly Summary ({{ currentMonthLabel }})</b>
     </h3>
+    <div class="month-picker">
+      <label>
+        <span>Select month</span>
+        <input type="month" v-model="selectedMonth" />
+      </label>
+    </div>
     <div v-if="monthlySummary.length">
       <div
         v-for="(item, index) in monthlySummary"
@@ -38,7 +44,7 @@
 </template>
 
 <script setup>
-import { defineProps, computed } from "vue";
+import { defineProps, computed, ref } from "vue";
 
 const props = defineProps({
   transactions: {
@@ -47,14 +53,14 @@ const props = defineProps({
   },
 });
 
-// Get current month and year to filter transactions
 const currentDate = new Date();
-const currentMonth = currentDate.getMonth();
-const currentYear = currentDate.getFullYear();
+const currentMonthIso = currentDate.toISOString().slice(0, 7);
+const selectedMonth = ref(currentMonthIso);
 
 // Create a label for the current month (e.g., "April 2025")
 const currentMonthLabel = computed(() => {
-  return new Date().toLocaleString("default", {
+  const [year, month] = selectedMonth.value.split("-");
+  return new Date(`${year}-${month}-01`).toLocaleString("default", {
     month: "long",
     year: "numeric",
   });
@@ -64,13 +70,17 @@ const currentMonthLabel = computed(() => {
 const monthlySummary = computed(() => {
   const summary = {};
 
+  const [selectedYear, selectedMonthNumber] = selectedMonth.value
+    .split("-")
+    .map((val) => Number(val));
+
   props.transactions.forEach((transaction) => {
     // Ensure the transaction_time is parsed as a Date object
     const tDate = new Date(transaction.transaction_time);
     // Only include transactions from the current month and year
     if (
-      tDate.getMonth() === currentMonth &&
-      tDate.getFullYear() === currentYear
+      tDate.getMonth() + 1 === selectedMonthNumber &&
+      tDate.getFullYear() === selectedYear
     ) {
       // Group by actor if available, otherwise fallback to user_id or 'Unknown'
       const key = transaction.actor || transaction.user_id || "Unknown";
@@ -113,6 +123,27 @@ const formatCurrency = (amount) => {
   border-radius: 12px;
   color: white;
   overflow-y: auto;
+}
+
+.month-picker {
+  margin-bottom: 12px;
+  display: flex;
+  gap: 12px;
+}
+
+.month-picker span {
+  display: block;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.month-picker input {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: #f8fafc;
+  padding: 8px 10px;
+  border-radius: 8px;
 }
 
 h3 {
