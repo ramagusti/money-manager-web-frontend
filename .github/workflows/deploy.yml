@@ -1,4 +1,4 @@
-name: Deploy Vue Frontend to EC2
+name: Deploy Vue Frontend to VPS
 
 on:
   push:
@@ -10,12 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-        with:
-          node-version: 20
-
-      - name: Deploy to EC2
+      - name: Deploy to VPS
         env:
           EC2_USER: root
           EC2_HOST: 217.216.110.171
@@ -25,12 +20,14 @@ jobs:
           chmod 600 private_key.pem
           ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -i private_key.pem $EC2_USER@$EC2_HOST << 'EOF'
             export CI=true
-            sudo -u www-data -- sh -c '
+            cd /var/www/money-manager-web-frontend
+            chown -R openclaw:openclaw /var/www/money-manager-web-frontend
+            sudo -u openclaw -- sh -lc '
               cd /var/www/money-manager-web-frontend &&
-              git reset --hard origin/main
-              git pull origin main
-              npm install --no-audit --no-fund
-              npm run build || true
+              git fetch origin &&
+              git reset --hard origin/main &&
+              npm install --no-audit --no-fund &&
+              npm run build
             '
-            sudo systemctl restart nginx
+            systemctl reload nginx
           EOF
