@@ -511,6 +511,16 @@ const formatAmount = (amount) =>
 const applyCurrencyMask = (value) =>
   formatAmount(Number(value?.toString().replace(/[^\d.-]/g, "")));
 
+const toDateTimeLocalValue = (value) => {
+  if (!value) return "";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return localDate.toISOString().slice(0, 16);
+};
+
 const resetForm = () => {
   formData.value = {
     type: "expense",
@@ -665,7 +675,7 @@ const editTransaction = (transaction) => {
     formattedAmount: formatAmount(transaction.amount),
     description: transaction.description || "",
     actor: transaction.actor || "",
-    transaction_time: transaction.transaction_time,
+    transaction_time: toDateTimeLocalValue(transaction.transaction_time),
     proof: transaction.proof || null,
   };
 
