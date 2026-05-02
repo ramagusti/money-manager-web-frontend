@@ -7,6 +7,7 @@
     ></div>
 
     <aside
+      ref="sidebarRef"
       class="sidebar"
       :class="{
         collapsed: !isMobile && isCollapsed,
@@ -101,6 +102,7 @@ const router = useRouter();
 const appStore = useAppStore();
 const selectedGroup = ref(null);
 const isMobile = ref(window.innerWidth <= 768);
+const sidebarRef = ref(null);
 
 // Extract reactive state from the store as refs
 const { isCollapsed, userGroups, currentGroup } = storeToRefs(appStore);
@@ -133,16 +135,29 @@ watch(currentGroup, async () => {
 onMounted(async () => {
   selectedGroup.value = currentGroup.value?.id;
   window.addEventListener("resize", handleResize);
+  document.addEventListener("click", handleDesktopOutsideClick);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", handleResize);
+  document.removeEventListener("click", handleDesktopOutsideClick);
 });
 
 const handleResize = () => {
   isMobile.value = window.innerWidth <= 768;
   if (!isMobile.value) {
     emit("update:mobileOpen", false);
+  }
+};
+
+const handleDesktopOutsideClick = (event) => {
+  if (isMobile.value || isCollapsed.value) return;
+
+  const sidebarEl = sidebarRef.value;
+  if (!sidebarEl) return;
+
+  if (!sidebarEl.contains(event.target)) {
+    appStore.setCollapsed(true);
   }
 };
 
